@@ -2,7 +2,6 @@ from PIL import ImageGrab, ImageOps, Image
 from numpy import *
 from pytesseract import image_to_string
 import pytesseract
-import array
 import os
 import time
 import win32api
@@ -14,9 +13,12 @@ import numbers
 # ----------------
 x_pad = 455
 y_pad = 345
-money = "0.0"
-oldMoney = "0.0"
 isActive = False
+
+# Player class
+class Player:
+    # player's money
+    money = 0.0
 
 # Cord class with cordinations in
 class Cord:
@@ -28,6 +30,13 @@ class Cord:
     # play menu section
     play = (893,462)
     double = (893,373)
+    # winner secton
+    winner = (845,864,845+50,864+50)
+
+# Color Codes 
+class ColorCodes:
+    winner = 10395
+    lose = 10246
 
 # take a screenshot of position 'x_pad' and 'y_pad'
 def screenGrab():
@@ -36,72 +45,72 @@ def screenGrab():
     
     ##im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
     return im
+# take a screenshot and turn it in grayscale and calculate a color code
+def grab():
+    box = (Cord.winner)
+    im = ImageOps.grayscale(ImageGrab.grab(box))
+    #im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
+    colorCode = array(im.getcolors())
+    colorCode = colorCode.sum()
+    print(colorCode)
+    return colorCode
 
+## CORDINATIONS
 # get current mouse position x and y
 def getCords():
     x,y = win32api.GetCursorPos()
-    x = x - x_pad
-    y = y - y_pad
     print(x,y)
+# set cordinations
+def saveCords(value):
+    x,y = win32api.GetCursorPos()
+    # filter value
+    if value == 'chip_1':
+        # save cord for chip 1€
+        Cord.chip_1 = (x,y)
+        time.sleep(.5)
+        print('Position saved! X: '+ str(x) +' Y: '+ str(y))
+    elif value == 'play':
+        # save cord for play
+        Cord.play = (x,y)
+        time.sleep(.5)
+        print('Position saved! X: '+ str(x) +' Y: '+ str(y))
+    elif value == 'double':
+        # save cord for double
+        Cord.double = (x,y)
+        time.sleep(.5)
+        print('Position saved! X: '+ str(x) +' Y: '+ str(y))
+    elif value == 'color_red':
+        # save cord for color_red
+        Cord.color_red = (x,y)
+        time.sleep(.5)
+        print('Position saved! X: '+ str(x) +' Y: '+ str(y))
+    elif value == 'color_black':
+        # save cord for color_black
+        Cord.color_black = (x,y)
+        time.sleep(.5)
+        print('Position saved! X: '+ str(x) +' Y: '+ str(y))
 
 ## Money
-# read out money
-def getMoney(pos="pos1"):
-    global money
-    currentPos = pos
-    # if try pos1
-    if pos == "pos1":
-        pos1 = pyautogui.screenshot('money.png',region=(x_pad+42,y_pad+560,100,30))
-        time.sleep(1)
-        img = Image.open('money.png')
-        pos1 = pytesseract.image_to_string(img)
-        money = pos1
-    # try different position
-    elif pos == "pos2":
-        pos2 = pyautogui.screenshot('money.png',region=(x_pad+35,y_pad+560,100,30))
-        time.sleep(1)
-        img = Image.open('money.png')
-        pos2 = pytesseract.image_to_string(img)
-        money = pos2[1:]
-    # try different position
-    elif pos == "pos3":
-        pos3 = pyautogui.screenshot('money.png',region=(x_pad+128,y_pad+535,100,20))
-        time.sleep(1)
-        img = Image.open('money.png')
-        pos3 = pytesseract.image_to_string(img)
-        money = pos3
-    time.sleep(.5)
-    print(money)
-    # check if money is not empty
-    try:
-        if float(money):
-            print("Your current Money is: "+ money +"€")
-            return money
-    except ValueError:    
-        print("Can't read your Money! Trying again...")
-        time.sleep(.5)
-        if currentPos == "pos1":
-            # do again
-            getMoney("pos2")
-        elif currentPos == "pos2":
-            # do again
-            getMoney("pos3")
-# save money
-def saveMoney(value):
-    global oldMoney
-    oldMoney = value
-    return oldMoney
+# decrease money
+def decreaseMoney():
+    # decrease money
+    Player.money -= 1.0
+    print('Current Money: '+ str(Player.money))
+# increase money
+def increaseMoney():    
+    # increase money
+    Player.money += 1.0
+    print('Current Money: '+ str(Player.money))
 
 ## Betting
 # bet on red
 def betRed(isLose=False):
-    # save money
-    saveMoney(money)
-    # check if 'isLose' true - so double it
+    # You Lost - double it
     if isLose == True:
         # play double
         leftClick(Cord.double)
-    elif isLose == False:
+    # You Won
+    else:
         # play red
         leftClick(Cord.color_red)
         time.sleep(.3)
@@ -110,8 +119,6 @@ def betRed(isLose=False):
     checkRound("red")
 # bet on black
 def betBlack(isLose=False):
-    # save money
-    saveMoney(money)
     # check if 'isLose' true - so double it
     if isLose == True:
         # play double
@@ -126,38 +133,48 @@ def betBlack(isLose=False):
 
 # check round if you lost it or won it
 def checkRound(color):
-    global money, oldMoney
-    time.sleep(7.5)
-    getMoney()
-    time.sleep(.3)
+    time.sleep(10)
     # red
     if color == "red":
+        # check for color codes
         # if you lost
-        if money < oldMoney:
+        print(grab())
+        print(ColorCodes.winner)
+        if grab() == ColorCodes.winner:
+            # decrease money
+            decreaseMoney()
             # play double
             print("Lose! Playing double...")
             betRed(True)
-        elif money > oldMoney:
+        # if you won
+        elif grab() == ColorCodes.lose:
+            # increase money
+            increaseMoney()
             # play black
             print("Win! Playing black...")
             betBlack(False)
     # black
     elif color == "black":
+        # check for color codes
         # if you lost
-        if money < oldMoney:
+        print(grab())
+        print(ColorCodes.winner)
+        if grab() == ColorCodes.winner:
+            # decrease money
+            decreaseMoney()
             # play double
             print("Lose! Playing double...")
             betBlack(True)
-        elif money > oldMoney:
+        elif grab() == ColorCodes.lose:
+            # increase money
+            increaseMoney()
             # play red
             print("Win! Playing red...")
             betRed(False)
-    time.sleep(.3)
-    saveMoney(getMoney())
 
 # set mouse to 'cord' position
 def mousePos(cord):
-    win32api.SetCursorPos((x_pad + cord[0], y_pad + cord[1]))
+    win32api.SetCursorPos((cord[0], cord[1]))
 
 # do a left mouse click
 def leftClick(cord):
@@ -172,10 +189,6 @@ def leftClick(cord):
 
 # start the Game
 def gameStart():
-    global isActive, money
-    isActive = True
-    # get money
-    getMoney()
     time.sleep(.3)
     # click on location chip with number 1€
     leftClick(Cord.chip_1)
@@ -183,7 +196,48 @@ def gameStart():
     # begin with black
     betBlack(False)
 
-if __name__ == '__main__':
+## SETUP
+def startConfig():
+    print('This Bot is optimized for Bet365 page, if you want to use it somewhere else, try it out and let me know if it works.')
+    print('-------------------------------------------')
+    time.sleep(1.5)
+    print('Starting configurating postions of the Roulette Game')
+    print('-------------------------------------------')
+    time.sleep(1)
+    input('Move your Mouse Cursor on the \"1 Euro\" button and hit ENTER.')
+    saveCords('chip_1')
+    print('-------------------------------------------')
+    time.sleep(.3)
+    input('Move your Mouse Cursor on the \"Roll/Start\" button and hit ENTER.')
+    saveCords('play')
+    print('-------------------------------------------')
+    time.sleep(.3)
+    input('Move your Mouse Cursor on the \"Double and Play\" button and hit ENTER.')
+    saveCords('double')
+    print('-------------------------------------------')
+    time.sleep(.3)
+    input('Move your Mouse Cursor on the \"Red\" button and hit ENTER.')
+    saveCords('color_red')
+    print('-------------------------------------------')
+    time.sleep(.3)
+    input('Move your Mouse Cursor on the \"Black\" button and hit ENTER.')
+    saveCords('color_black')
+    print('-------------------------------------------')
+    time.sleep(2)
+    print('Thank you! Now we need your Money amount, so we can calculate if you won or lost!')
+    time.sleep(.3)
+    q_money = float(input('How much Money have you on your Hand? Enter like 20.0 : '))
+    print('-------------------------------------------')
+    print('Starting Bot in 3 seconds, don\'t change the size of the window, feel free to end the Bot with CTRL+C')
+    time.sleep(3)
+    #set money 
+    Player.money = q_money
+    time.sleep(1)
     gameStart()
+
+if __name__ == '__main__':
+    #gameStart()
+    startConfig()
+    #grab()
     #getCords()
     #getMoney()
