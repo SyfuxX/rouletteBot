@@ -8,17 +8,40 @@ import win32api
 import win32con
 import pyautogui
 import numbers
+from pynput import *
 
 # Globals
 # ----------------
+keyboard = keyboard
+mouse = mouse
 x_pad = 455
 y_pad = 345
 isActive = False
+
+# Settings class
+class Settings:
+    # chip 1
+    chip_1 = False
+    # start button
+    start = False
+    # double button
+    double = False
+    # red field
+    red = False
+    # black field
+    black = False
+    # money
+    money = False
+    # loser section
+    loserSection = False
 
 # Player class
 class Player:
     # player's money
     money = 0.0
+    # player's lose counter
+    loseCounter = 0
+    currentLose = 1.0
 
 # Cord class with cordinations in
 class Cord:
@@ -30,13 +53,15 @@ class Cord:
     # play menu section
     play = (893,462)
     double = (893,373)
-    # winner secton
-    winner = (845,864,845+50,864+50)
+    # loser secton
+    loser = (845,864,845+50,864+50)
 
 # Color Codes 
 class ColorCodes:
-    winner = 10395
     lose = 10246
+
+## CLEAR CONSOLE
+clear = lambda: os.system('cls')
 
 # take a screenshot of position 'x_pad' and 'y_pad'
 def screenGrab():
@@ -47,9 +72,9 @@ def screenGrab():
     return im
 # take a screenshot and turn it in grayscale and calculate a color code
 def grab():
-    box = (Cord.winner)
+    box = (Cord.loser)
     im = ImageOps.grayscale(ImageGrab.grab(box))
-    #im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
+    im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
     colorCode = array(im.getcolors())
     colorCode = colorCode.sum()
     print(colorCode)
@@ -89,12 +114,26 @@ def saveCords(value):
         Cord.color_black = (x,y)
         time.sleep(.5)
         print('Position saved! X: '+ str(x) +' Y: '+ str(y))
+    elif value == 'loser':
+        # save cord for loser section
+        Cord.loser = (x,y,x+50,y+50)
+        time.sleep(.1)
+        print('Position saved! X: '+ str(x) +' Y: '+ str(y) +' Zone: +50')
 
 ## Money
 # decrease money
 def decreaseMoney():
-    # decrease money
-    Player.money -= 1.0
+    # increase loseCounter
+    Player.loseCounter += 1
+    # decrease by loseCounter
+    if Player.loseCounter == 1:
+        # decrease money
+        Player.money -= 1.0
+    elif Player.loseCounter > 1:
+        # save currentLose
+        Player.currentLose = Player.currentLose*2
+    print('loseCounter: '+ str(Player.loseCounter))
+    print('currentLose: '+ str(Player.currentLose))
     print('Current Money: '+ str(Player.money))
 # increase money
 def increaseMoney():    
@@ -136,40 +175,41 @@ def checkRound(color):
     time.sleep(10)
     # red
     if color == "red":
+        print(grab())
+        print(ColorCodes.lose)
         # check for color codes
         # if you lost
-        print(grab())
-        print(ColorCodes.winner)
-        if grab() == ColorCodes.winner:
+        if grab() == ColorCodes.lose:
             # decrease money
             decreaseMoney()
             # play double
-            print("Lose! Playing double...")
+            print("Lose! Playing again with double ...")
             betRed(True)
         # if you won
-        elif grab() == ColorCodes.lose:
+        elif grab() != ColorCodes.lose:
             # increase money
             increaseMoney()
             # play black
-            print("Win! Playing black...")
+            print("Win! Playing now on black ...")
             betBlack(False)
     # black
     elif color == "black":
+        print(grab())
+        print(ColorCodes.lose)
         # check for color codes
         # if you lost
-        print(grab())
-        print(ColorCodes.winner)
-        if grab() == ColorCodes.winner:
+        if grab() == ColorCodes.lose:
             # decrease money
             decreaseMoney()
             # play double
-            print("Lose! Playing double...")
+            print("Lose! Playing again with double ...")
             betBlack(True)
-        elif grab() == ColorCodes.lose:
+        # if you won
+        elif grab() != ColorCodes.lose:
             # increase money
             increaseMoney()
             # play red
-            print("Win! Playing red...")
+            print("Win! Playing now on red ...")
             betRed(False)
 
 # set mouse to 'cord' position
@@ -196,48 +236,192 @@ def gameStart():
     # begin with black
     betBlack(False)
 
-## SETUP
+## KEYBOARD LISTENERS
+# on press
+def on_press(key):
+    if key == keyboard.KeyCode.from_char('1'):
+        clear()
+        # save position for chip 1€
+        print('Wait for saving position for 1 Euro Chip ...')
+        Settings.chip_1 = True
+        time.sleep(.1)
+        saveCords('chip_1')
+        settingsInfo()
+    elif key == keyboard.KeyCode.from_char('2'):
+        clear()
+        # save position for roll/start
+        print('Wait for saving position for Play button ...')
+        Settings.start = True
+        time.sleep(.1)
+        saveCords('play')
+        settingsInfo()
+    elif key == keyboard.KeyCode.from_char('3'):
+        clear()
+        # save position for double
+        print('Wait for saving position for Double button ...')
+        Settings.double = True
+        time.sleep(.1)
+        saveCords('double')
+        settingsInfo()
+    elif key == keyboard.KeyCode.from_char('4'):
+        clear()
+        # save position for color red
+        print('Wait for saving position for Red color ...')
+        Settings.red = True
+        time.sleep(.1)
+        saveCords('color_red')
+        settingsInfo()
+    elif key == keyboard.KeyCode.from_char('5'):
+        clear()
+        # save position for color black
+        print('Wait for saving position for Black color ...')
+        Settings.black = True
+        time.sleep(.1)
+        saveCords('color_black')
+        settingsInfo()
+    elif key == keyboard.KeyCode.from_char('6'):
+        clear()
+        # change money amount
+        print('Wait for saving Money from your Hand ...')
+        Settings.money = True
+        time.sleep(.1)
+        Player.money = float(input('Money in your Hand? Enter like 20.0: '))
+        settingsInfo()
+    elif key == keyboard.KeyCode.from_char('7'):
+        clear()
+        # change loser section
+        print('Wait for saving position for Loser Section ...')
+        Settings.loserSection = True
+        time.sleep(.1)
+        saveCords('loser')
+        saveColor = grab()
+        ColorCodes.lose = saveColor
+        settingsInfo()
+    elif key == keyboard.Key.esc:
+        print('All Settings has been saved, back to main menu ...')
+        time.sleep(1)
+        menu()
+        return False
+
+## MENUS
+# Menu
+def menu():
+    clear()
+    print('######################')
+    print('## ROULETTE BOT MENU')
+    print('######################')
+    time.sleep(.1)
+    print('## NAVIGATION OPTION')
+    print('######################')
+    time.sleep(.1)
+    print('## Start Bot [1]')
+    print('## Configurate Bot [2]')
+    print('##')
+    print('## Open About [9]')
+    print('## Exit [0]')
+    print('#######################')
+    time.sleep(.3)
+    # navigate to settings
+    menu_nav = input('Select an option [1|2|9|0] and hit ENTER: ')
+    # if 1
+    if menu_nav == '1':
+        # start bot
+        gameStart()
+    if menu_nav == '2':
+        # start config
+        startConfig()
+    if menu_nav == '9':
+        # start about
+        startAbout()
+    if menu_nav == '0':
+        # exit
+        exit()
+# Config
 def startConfig():
-    print('This Bot is optimized for Bet365 page, if you want to use it somewhere else, try it out and let me know if it works.')
-    print('-------------------------------------------')
-    time.sleep(1.5)
-    print('Starting configurating postions of the Roulette Game')
-    print('-------------------------------------------')
+    clear()
+    settingsInfo()
+    # listen to key press events
+    with keyboard.Listener(on_press=on_press) as listener:
+        try:
+            listener.join()
+        except MyError as e:
+            print('{0} was pressed'.format(e.args[0]))
+# About
+def startAbout():
+    clear()
+    # about me
+    print('######################')
+    print('## ABOUT ROULETTEBOT')
+    print('######################')
+    print('## Bot was created by SyfuxX!')
+    print('## Thank you for using it.')
+    time.sleep(.1)
+    print('######################')
+    print('## NAVIGATION OPTION')
+    print('######################')
+    time.sleep(.1)
+    print('## Back to Main Menu [1]')
+    print('##')
+    print('## Exit [0]')
+    print('#######################')
+    time.sleep(.3)
+    # navigate to settings
+    menu_nav = input('Select an option [1|0] and hit ENTER: ')
+    if menu_nav == '1':
+        # start about
+        menu()
+    if menu_nav == '0':
+        # exit
+        exit()
+# Settings Info
+def settingsInfo():
     time.sleep(1)
-    input('Move your Mouse Cursor on the \"1 Euro\" button and hit ENTER.')
-    saveCords('chip_1')
-    print('-------------------------------------------')
-    time.sleep(.3)
-    input('Move your Mouse Cursor on the \"Roll/Start\" button and hit ENTER.')
-    saveCords('play')
-    print('-------------------------------------------')
-    time.sleep(.3)
-    input('Move your Mouse Cursor on the \"Double and Play\" button and hit ENTER.')
-    saveCords('double')
-    print('-------------------------------------------')
-    time.sleep(.3)
-    input('Move your Mouse Cursor on the \"Red\" button and hit ENTER.')
-    saveCords('color_red')
-    print('-------------------------------------------')
-    time.sleep(.3)
-    input('Move your Mouse Cursor on the \"Black\" button and hit ENTER.')
-    saveCords('color_black')
-    print('-------------------------------------------')
-    time.sleep(2)
-    print('Thank you! Now we need your Money amount, so we can calculate if you won or lost!')
-    time.sleep(.3)
-    q_money = float(input('How much Money have you on your Hand? Enter like 20.0 : '))
-    print('-------------------------------------------')
-    print('Starting Bot in 3 seconds, don\'t change the size of the window, feel free to end the Bot with CTRL+C')
-    time.sleep(3)
-    #set money 
-    Player.money = q_money
+    print('#######################')
+    # check if 'chip 1' is set
+    if Settings.chip_1 == True:
+        print('## Chip 1 Euro [X]')
+    else:
+        print('## Chip 1 Euro [ ] - Hit Key \'1\' to configurate')
+    # check if 'play' is set
+    time.sleep(.1)
+    if Settings.start == True:
+        print('## Start Button [X]')
+    else:
+        print('## Start Button [ ] - Hit Key \'2\' to configurate')
+    # check if 'double' is set
+    time.sleep(.1)
+    if Settings.double == True:
+        print('## Double Button [X]')
+    else:
+        print('## Double Button [ ] - Hit Key \'3\' to configurate')
+    # check if 'red' is set
+    time.sleep(.1)
+    if Settings.red == True:
+        print('## Red Field [X]')
+    else:
+        print('## Red Field [ ] - Hit Key \'4\' to configurate')
+    # check if 'black' is set
+    time.sleep(.1)
+    if Settings.black == True:
+        print('## Black Field [X]')
+    else:
+        print('## Black Field [ ] - Hit Key \'5\' to configurate')
+    # check if 'money' is set
+    time.sleep(.1)
+    if Settings.money == True:
+        print('## Money Amount [X]')
+    else:
+        print('## Money Amount [ ] - Hit Key \'6\' to configurate')
+    # check if 'loser section' is set
+    time.sleep(.1)
+    if Settings.loserSection == True:
+        print('## Loser Section [X]')
+    else:
+        print('## Loser Section [ ] - Hit Key \'7\' to configurate')
+    print('## Hit Key \'ESC\' to save config')
+    print('#######################')
     time.sleep(1)
-    gameStart()
 
 if __name__ == '__main__':
-    #gameStart()
-    startConfig()
+    menu()
     #grab()
-    #getCords()
-    #getMoney()
