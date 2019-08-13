@@ -17,9 +17,13 @@ mouse = mouse
 x_pad = 455
 y_pad = 345
 isActive = False
+loseMultiplicator = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
+winMultiplicator = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
 
 # Settings class
 class Settings:
+    # money
+    money = False
     # chip 1
     chip_1 = False
     # start button
@@ -30,10 +34,10 @@ class Settings:
     red = False
     # black field
     black = False
-    # money
-    money = False
     # loser section
     loserSection = False
+    # start by black/red
+    redOrBlack = 0
 
 # Player class
 class Player:
@@ -74,10 +78,10 @@ def screenGrab():
 def grab():
     box = (Cord.loser)
     im = ImageOps.grayscale(ImageGrab.grab(box))
-    im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
+    #im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
     colorCode = array(im.getcolors())
     colorCode = colorCode.sum()
-    print(colorCode)
+    #print(colorCode)
     return colorCode
 
 ## CORDINATIONS
@@ -123,23 +127,18 @@ def saveCords(value):
 ## Money
 # decrease money
 def decreaseMoney():
+    # decrease money
+    Player.money = Player.money - loseMultiplicator[Player.loseCounter]
+    # print out current Money after lose
+    print('You lost! Your money: '+ str(Player.money) +'€')
     # increase loseCounter
     Player.loseCounter += 1
-    # decrease by loseCounter
-    if Player.loseCounter == 1:
-        # decrease money
-        Player.money -= 1.0
-    elif Player.loseCounter > 1:
-        # save currentLose
-        Player.currentLose = Player.currentLose*2
-    print('loseCounter: '+ str(Player.loseCounter))
-    print('currentLose: '+ str(Player.currentLose))
-    print('Current Money: '+ str(Player.money))
 # increase money
-def increaseMoney():    
-    # increase money
-    Player.money += 1.0
-    print('Current Money: '+ str(Player.money))
+def increaseMoney():
+    # increase money by winMultiplicator
+    Player.money = Player.money + winMultiplicator[Player.loseCounter]
+    # print out current Money after win
+    print('You won! Your money: '+ str(Player.money) +'€')
 
 ## Betting
 # bet on red
@@ -183,14 +182,14 @@ def checkRound(color):
             # decrease money
             decreaseMoney()
             # play double
-            print("Lose! Playing again with double ...")
+            print("Playing again with double ...")
             betRed(True)
         # if you won
         elif grab() != ColorCodes.lose:
             # increase money
             increaseMoney()
             # play black
-            print("Win! Playing now on black ...")
+            print("Playing now on black ...")
             betBlack(False)
     # black
     elif color == "black":
@@ -202,14 +201,14 @@ def checkRound(color):
             # decrease money
             decreaseMoney()
             # play double
-            print("Lose! Playing again with double ...")
+            print("Playing again with double ...")
             betBlack(True)
         # if you won
         elif grab() != ColorCodes.lose:
             # increase money
             increaseMoney()
             # play red
-            print("Win! Playing now on red ...")
+            print("Playing now on red ...")
             betRed(False)
 
 # set mouse to 'cord' position
@@ -229,25 +228,40 @@ def leftClick(cord):
 
 # start the Game
 def gameStart():
-    time.sleep(.3)
-    # click on location chip with number 1€
-    leftClick(Cord.chip_1)
-    time.sleep(.3)
-    # begin with black
-    betBlack(False)
+    # check if all settings are set
+    if (Settings.money == True and Settings.chip_1 == True and Settings.double == True and Settings.loserSection == True and Settings.redOrBlack != 0 and Settings.start == True and Settings.color_black == True and Settings.color_red == True):
+        # start game
+        time.sleep(.3)
+        # click on location chip with number 1€
+        leftClick(Cord.chip_1)
+        time.sleep(.3)
+        if (Settings.redOrBlack == 1):
+            # begin with black
+            betBlack(False)
+        else:
+            # begin with red
+            betRed(False)
+    else:
+        clear()
+        print("You have not configurated the Bot yet!")
+        time.sleep(2)
+        menu()
 
 ## KEYBOARD LISTENERS
 # on press
-def on_press(key):
-    if key == keyboard.KeyCode.from_char('1'):
+def configMenu(key):
+    if key == 1:
         clear()
-        # save position for chip 1€
-        print('Wait for saving position for 1 Euro Chip ...')
-        Settings.chip_1 = True
+        # change money amount
+        print('Enter like:')
+        print('5€ = 5.0')
+        print('10€ = 10.0')
+        print('25,50€ = 25.5')
+        Settings.money = True
         time.sleep(.1)
-        saveCords('chip_1')
+        Player.money = float(input('Money in your Hand? '))
         settingsInfo()
-    elif key == keyboard.KeyCode.from_char('2'):
+    elif key == 2:
         clear()
         # save position for roll/start
         print('Wait for saving position for Play button ...')
@@ -255,7 +269,7 @@ def on_press(key):
         time.sleep(.1)
         saveCords('play')
         settingsInfo()
-    elif key == keyboard.KeyCode.from_char('3'):
+    elif key == 3:
         clear()
         # save position for double
         print('Wait for saving position for Double button ...')
@@ -263,7 +277,7 @@ def on_press(key):
         time.sleep(.1)
         saveCords('double')
         settingsInfo()
-    elif key == keyboard.KeyCode.from_char('4'):
+    elif key == 4:
         clear()
         # save position for color red
         print('Wait for saving position for Red color ...')
@@ -271,7 +285,7 @@ def on_press(key):
         time.sleep(.1)
         saveCords('color_red')
         settingsInfo()
-    elif key == keyboard.KeyCode.from_char('5'):
+    elif key == 5:
         clear()
         # save position for color black
         print('Wait for saving position for Black color ...')
@@ -279,15 +293,15 @@ def on_press(key):
         time.sleep(.1)
         saveCords('color_black')
         settingsInfo()
-    elif key == keyboard.KeyCode.from_char('6'):
+    elif key == 6:
         clear()
-        # change money amount
-        print('Wait for saving Money from your Hand ...')
-        Settings.money = True
+        # save position for chip 1€
+        print('Wait for saving position for 1 Euro Chip ...')
+        Settings.chip_1 = True
         time.sleep(.1)
-        Player.money = float(input('Money in your Hand? Enter like 20.0: '))
+        saveCords('chip_1')
         settingsInfo()
-    elif key == keyboard.KeyCode.from_char('7'):
+    elif key == 7:
         clear()
         # change loser section
         print('Wait for saving position for Loser Section ...')
@@ -297,11 +311,19 @@ def on_press(key):
         saveColor = grab()
         ColorCodes.lose = saveColor
         settingsInfo()
-    elif key == keyboard.Key.esc:
+    elif key == 8:
+        clear()
+        # change start by black or red
+        print('Choose the starting Bet:')
+        print('Black = 1')
+        print('Red = 2')
+        time.sleep(.1)
+        Settings.redOrBlack = int(input('Start with Black or Red? '))
+        settingsInfo()
+    elif key == 0:
         print('All Settings has been saved, back to main menu ...')
         time.sleep(1)
         menu()
-        return False
 
 ## MENUS
 # Menu
@@ -314,11 +336,11 @@ def menu():
     print('## NAVIGATION OPTION')
     print('######################')
     time.sleep(.1)
-    print('## Start Bot [1]')
-    print('## Configurate Bot [2]')
+    print('## [1] - Start Bot')
+    print('## [2] - Configurate Bot')
     print('##')
-    print('## Open About [9]')
-    print('## Exit [0]')
+    print('## [9] - Open About')
+    print('## [0] - Exit')
     print('#######################')
     time.sleep(.3)
     # navigate to settings
@@ -340,12 +362,6 @@ def menu():
 def startConfig():
     clear()
     settingsInfo()
-    # listen to key press events
-    with keyboard.Listener(on_press=on_press) as listener:
-        try:
-            listener.join()
-        except MyError as e:
-            print('{0} was pressed'.format(e.args[0]))
 # About
 def startAbout():
     clear()
@@ -360,9 +376,9 @@ def startAbout():
     print('## NAVIGATION OPTION')
     print('######################')
     time.sleep(.1)
-    print('## Back to Main Menu [1]')
+    print('## [1] - Back to Main Menu')
     print('##')
-    print('## Exit [0]')
+    print('## [0] - Exit')
     print('#######################')
     time.sleep(.3)
     # navigate to settings
@@ -376,52 +392,57 @@ def startAbout():
 # Settings Info
 def settingsInfo():
     time.sleep(1)
+    clear()
     print('#######################')
+    # check if 'money' is set
+    if Settings.money == True:
+        print('## [1] - Money Amount [X] - '+ str(Player.money) +'€')
+    else:
+        print('## [1] - Money Amount [ ]')
+    # check if 'play' is set
+    if Settings.start == True:
+        print('## [2] - Start Button [X] - '+ str(Cord.play))
+    else:
+        print('## [2] - Start Button [ ]')
+    # check if 'double' is set
+    if Settings.double == True:
+        print('## [3] - Double Button [X] - '+ str(Cord.double))
+    else:
+        print('## [3] - Double Button [ ]')
+    # check if 'red' is set
+    if Settings.red == True:
+        print('## [4] - Red Field [X] - '+ str(Cord.color_red))
+    else:
+        print('## [4] - Red Field [ ]')
+    # check if 'black' is set
+    if Settings.black == True:
+        print('## [5] - Black Field [X] - '+ str(Cord.color_black))
+    else:
+        print('## [5] - Black Field [ ]')
     # check if 'chip 1' is set
     if Settings.chip_1 == True:
-        print('## Chip 1 Euro [X]')
+        print('## [6] - Chip 1 Euro [X] - '+ str(Cord.chip_1))
     else:
-        print('## Chip 1 Euro [ ] - Hit Key \'1\' to configurate')
-    # check if 'play' is set
-    time.sleep(.1)
-    if Settings.start == True:
-        print('## Start Button [X]')
-    else:
-        print('## Start Button [ ] - Hit Key \'2\' to configurate')
-    # check if 'double' is set
-    time.sleep(.1)
-    if Settings.double == True:
-        print('## Double Button [X]')
-    else:
-        print('## Double Button [ ] - Hit Key \'3\' to configurate')
-    # check if 'red' is set
-    time.sleep(.1)
-    if Settings.red == True:
-        print('## Red Field [X]')
-    else:
-        print('## Red Field [ ] - Hit Key \'4\' to configurate')
-    # check if 'black' is set
-    time.sleep(.1)
-    if Settings.black == True:
-        print('## Black Field [X]')
-    else:
-        print('## Black Field [ ] - Hit Key \'5\' to configurate')
-    # check if 'money' is set
-    time.sleep(.1)
-    if Settings.money == True:
-        print('## Money Amount [X]')
-    else:
-        print('## Money Amount [ ] - Hit Key \'6\' to configurate')
+        print('## [6] - Chip 1 Euro [ ]')
     # check if 'loser section' is set
-    time.sleep(.1)
     if Settings.loserSection == True:
-        print('## Loser Section [X]')
+        print('## [7] - Loser Section [X] - '+ str(Cord.loser))
     else:
-        print('## Loser Section [ ] - Hit Key \'7\' to configurate')
-    print('## Hit Key \'ESC\' to save config')
+        print('## [7] - Loser Section [ ]')
+    # change start by black or red
+    if Settings.redOrBlack == 2:
+        print('## [8] - Start with Black/Red [X] - Red')
+    elif Settings.redOrBlack == 1:
+        print('## [8] - Start with Black/Red [X] - Black')
+    else:
+        print('## [8] - Start with Black/Red [ ]')
+    print('##')
+    print('## [0] - Save Config')
     print('#######################')
-    time.sleep(1)
-
+    time.sleep(.1)
+    option = int(input("Select an option [1|2|3|4|5|6|7|8|0] and hit ENTER: "))
+    configMenu(option)
+    
 if __name__ == '__main__':
     menu()
     #grab()
