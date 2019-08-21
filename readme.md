@@ -20,5 +20,5 @@ Only work on Software and French Roulette.
 
 It is a low risk to get a over 7 losing streak.
 
-## By Downloading & Playing with my Bot you Aggree that you take risk of loosing all of your Money!
-## This Bot is free to use, if you want to give me a donation, feel free!
+### By Downloading & Playing with my Bot you Aggree that you take risk of loosing all of your Money!
+### This Bot is free to use, if you want to give me a donation, feel free!
