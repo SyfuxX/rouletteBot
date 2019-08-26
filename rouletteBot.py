@@ -3,6 +3,8 @@ from numpy import *
 from pytesseract import image_to_string
 import pytesseract
 import os
+import io
+import configparser
 import time
 import win32api
 import win32con
@@ -10,34 +12,66 @@ import pyautogui
 import numbers
 from pynput import *
 
+# Game Logics
+# ----------------
+# Bet365
+# 1. Click on "1€" Chip
+# 2. Click on "Red or Black"
+# 3. Click on "Start"
+# 4. Wait 10 seconds and take a screenshot of "Loser Section"
+# - Losing
+# 1. Click on "Double and Start"
+# - Winning
+# 1. Click on "Red or Black", depends which you played before
+# 2. Click on "Start"
+# --
+# CasinoClub
+# 1. Click on "Take Place"
+# 2. Click on "1€" Chip
+# 3. Click on "Red or Black"
+# 4. Click on "Start"
+# 5. Wait 15 seconds and take a screenshot of "Loser Section"
+# - Losing
+# 1. Click on "Start" and place same amount of chips as the round before [Only Coordination of Start]
+# 2. Click on "Red or Black", depends which you played before and hit it x times [x = loseCounter]
+# 3. Click on "Start"
+# - Winning
+# 1. Click on "Red or Black", depends which you played before
+# 2. Click on "Start"
+
 # Globals
 # ----------------
 keyboard = keyboard
 mouse = mouse
+Config = configparser.ConfigParser()
 x_pad = 455
 y_pad = 345
 isActive = False
 loseMultiplicator = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
-winMultiplicator = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
+winMultiplicator = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
+hashLine = "######################"
+configName = "config.ini"
 
 # Settings class
 class Settings:
-    # money
+    # money [All]
     money = False
-    # chip 1
+    # chip 1 [All]
     chip_1 = False
-    # start button
+    # start button [All]
     start = False
-    # double button
+    # double button [Bet365]
     double = False
-    # red field
+    # red field [All]
     red = False
-    # black field
+    # black field [All]
     black = False
-    # loser section
+    # loser section [All]
     loserSection = False
-    # start by black/red
+    # start by black/red [All]
     redOrBlack = 0
+    # webpage / software
+    casino = ""
 
 # Player class
 class Player:
@@ -50,15 +84,15 @@ class Player:
 # Cord class with cordinations in
 class Cord:
     # chip section
-    chip_1 = (96,283)
+    chip_1_f, chip_1_s = (96,283)
     # bet section
-    color_red = (445,483)
-    color_black = (546,484)
+    color_red_f, color_red_s = (445,483)
+    color_black_f, color_black_s = (546,484)
     # play menu section
-    play = (893,462)
-    double = (893,373)
+    play_f, play_s = (893,462)
+    double_f, double_s = (893,373)
     # loser secton
-    loser = (845,864,845+50,864+50)
+    loser_f, loser_s, loser_t, loser_fo = (1460,842,1460+50,842+10)
 
 # Color Codes 
 class ColorCodes:
@@ -72,7 +106,7 @@ def screenGrab():
     box = (x_pad, y_pad, x_pad+990, y_pad+580)
     im = ImageGrab.grab(box)
     
-    ##im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
+    #im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
     return im
 # take a screenshot and turn it in grayscale and calculate a color code
 def grab():
@@ -81,7 +115,7 @@ def grab():
     #im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
     colorCode = array(im.getcolors())
     colorCode = colorCode.sum()
-    #print(colorCode)
+    #print("Color Code: "+ str(colorCode))
     return colorCode
 
 ## CORDINATIONS
@@ -95,120 +129,201 @@ def saveCords(value):
     # filter value
     if value == 'chip_1':
         # save cord for chip 1€
-        Cord.chip_1 = (x,y)
+        Cord.chip_1_f, Cord.chip_1_s = (x,y)
         time.sleep(.5)
-        print('Position saved! X: '+ str(x) +' Y: '+ str(y))
+        print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'play':
         # save cord for play
-        Cord.play = (x,y)
+        Cord.play_f, Cord.play_s = (x,y)
         time.sleep(.5)
-        print('Position saved! X: '+ str(x) +' Y: '+ str(y))
+        print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'double':
         # save cord for double
-        Cord.double = (x,y)
+        Cord.double_f, Cord.double_s = (x,y)
         time.sleep(.5)
-        print('Position saved! X: '+ str(x) +' Y: '+ str(y))
+        print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'color_red':
         # save cord for color_red
-        Cord.color_red = (x,y)
+        Cord.color_red_f, Cord.color_red_s = (x,y)
         time.sleep(.5)
-        print('Position saved! X: '+ str(x) +' Y: '+ str(y))
+        print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'color_black':
         # save cord for color_black
-        Cord.color_black = (x,y)
+        Cord.color_black_f, Cord.color_black_s = (x,y)
         time.sleep(.5)
-        print('Position saved! X: '+ str(x) +' Y: '+ str(y))
+        print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'loser':
+        # Bet365
+        if (Settings.casino == "Bet365"):
+            Cord.loser_f, Cord.loser_s, Cord.loser_t, Cord.loser_fo = (x,y,x+50,y+50)
+        # CasinoClub
+        elif (Settings.casino == "CasinoClub"):
+            Cord.loser_f, Cord.loser_s, Cord.loser_t, Cord.loser_fo = (x,y,x+50,y+12)
         # save cord for loser section
-        Cord.loser = (x,y,x+50,y+50)
         time.sleep(.1)
         print('Position saved! X: '+ str(x) +' Y: '+ str(y) +' Zone: +50')
 
 ## Money
 # decrease money
 def decreaseMoney():
+    print(hashLine)
     # decrease money
     Player.money = Player.money - loseMultiplicator[Player.loseCounter]
     # print out current Money after lose
-    print('You lost! Your money: '+ str(Player.money) +'€')
+    print('## [INFO] - LOSE! Money: '+ str(Player.money) +'€')
     # increase loseCounter
     Player.loseCounter += 1
 # increase money
 def increaseMoney():
+    print(hashLine)
     # increase money by winMultiplicator
     Player.money = Player.money + winMultiplicator[Player.loseCounter]
     # print out current Money after win
-    print('You won! Your money: '+ str(Player.money) +'€')
+    print('## [INFO] - WIN! Money: '+ str(Player.money) +'€')
+    # reset loseCounter
+    Player.loseCounter = 0
 
-## Betting
+## BETTING
 # bet on red
 def betRed(isLose=False):
-    # You Lost - double it
-    if isLose == True:
-        # play double
-        leftClick(Cord.double)
-    # You Won
-    else:
-        # play red
-        leftClick(Cord.color_red)
+    # check if 'Player.loseCounter' is bigger than 0
+    if (Player.loseCounter > 0):
+        # decrease by 1
+        clickMulti = Player.loseCounter-1
+    elif (Player.loseCounter == 0):
+        # increase by 1
+        clickMulti = Player.loseCounter+1
+    clickCounter = loseMultiplicator[clickMulti]
+    print("## [DEBUG] - Click Counter: "+ str(clickCounter))
+    i = 0
+    # Bet365
+    if (Settings.casino == "Bet365"):
+        # You Lost - double it
+        if isLose == True:
+            # play double
+            leftClick(Cord.double)
+        # You Won
+        else:
+            # play red
+            leftClick(Cord.color_red)
+            time.sleep(.3)
+            leftClick(Cord.play)
         time.sleep(.3)
-        leftClick(Cord.play)
-    time.sleep(.3)
-    checkRound("red")
+        checkRound("red")
+    # CasinoClub
+    elif (Settings.casino == "CasinoClub"):
+        # You Lost - double it
+        if isLose == True:
+            # click on 'Same Amount' [Play]
+            leftClick(Cord.play)
+            # click on 'Red' x times [x = loseCounter]
+            for i in range(clickCounter):
+                time.sleep(.3)
+                leftClick(Cord.color_red)
+            time.sleep(.3)
+            # click on 'Play'
+            leftClick(Cord.play)
+        # You Won
+        else:
+            # bet on red
+            leftClick(Cord.color_red)
+            time.sleep(.3)
+            # play
+            leftClick(Cord.play)
+        time.sleep(.3)
+        checkRound("red")
+
 # bet on black
 def betBlack(isLose=False):
-    # check if 'isLose' true - so double it
-    if isLose == True:
-        # play double
-        leftClick(Cord.double)
-    elif isLose == False:
-        # play black
-        leftClick(Cord.color_black)
+    # check if 'Player.loseCounter' is bigger than 0
+    if (Player.loseCounter > 0):
+        # decrease by 1
+        clickMulti = Player.loseCounter-1
+    elif (Player.loseCounter == 0):
+        # increase by 1
+        clickMulti = Player.loseCounter+1
+    clickCounter = loseMultiplicator[clickMulti]
+    print("## [DEBUG] - Click Counter: "+ str(clickCounter))
+    i = 0
+    # Bet365
+    if (Settings.casino == "Bet365"):
+        # check if 'isLose' true - so double it
+        if isLose == True:
+            # play double
+            leftClick(Cord.double)
+        elif isLose == False:
+            # play black
+            leftClick(Cord.color_black)
+            time.sleep(.3)
+            leftClick(Cord.play)
         time.sleep(.3)
-        leftClick(Cord.play)
-    time.sleep(.3)
-    checkRound("black")
+        checkRound("black")
+    # CasinoClub
+    elif (Settings.casino == "CasinoClub"):
+        # You Lost - double it
+        if isLose == True:
+            # click on 'Same Amount' [Play]
+            leftClick(Cord.play)
+            # click on 'Black' x times [x = loseCounter]
+            for i in range(clickCounter):
+                time.sleep(.3)
+                leftClick(Cord.color_black)
+            time.sleep(.3)
+            # click on 'Play'
+            leftClick(Cord.play)
+        # You Won
+        else:
+            # bet on black
+            leftClick(Cord.color_black)
+            time.sleep(.3)
+            # play
+            leftClick(Cord.play)
+        time.sleep(.3)
+        checkRound("black")
 
 # check round if you lost it or won it
 def checkRound(color):
-    time.sleep(10)
+    i = 0
+    # Bet365
+    if (Settings.casino == "Bet365"):
+        i = 12
+    # CasinoClub
+    elif (Settings.casino == "CasinoClub"):
+        i = 30
+    time.sleep(i)
     # red
     if color == "red":
-        print(grab())
-        print(ColorCodes.lose)
         # check for color codes
         # if you lost
         if grab() == ColorCodes.lose:
             # decrease money
             decreaseMoney()
             # play double
-            print("Playing again with double ...")
+            print("## [INFO] - Playing again with double ...")
             betRed(True)
         # if you won
         elif grab() != ColorCodes.lose:
             # increase money
             increaseMoney()
             # play black
-            print("Playing now on black ...")
+            print("## [INFO] - Playing now on black ...")
             betBlack(False)
     # black
     elif color == "black":
-        print(grab())
-        print(ColorCodes.lose)
         # check for color codes
         # if you lost
         if grab() == ColorCodes.lose:
             # decrease money
             decreaseMoney()
             # play double
-            print("Playing again with double ...")
+            print("## [INFO] - Playing again with double ...")
             betBlack(True)
         # if you won
         elif grab() != ColorCodes.lose:
             # increase money
             increaseMoney()
             # play red
-            print("Playing now on red ...")
+            print("## [INFO] - Playing now on red ...")
             betRed(False)
 
 # set mouse to 'cord' position
@@ -217,54 +332,105 @@ def mousePos(cord):
 
 # do a left mouse click
 def leftClick(cord):
-    #set location
+    # debug
+    # chip_1
+    if (cord == Cord.chip_1):
+        print('## [DEBUG] - Clicking on the Chip 1 Euro!')
+    # color_red
+    elif (cord == Cord.color_red):
+        print('## [DEBUG] - Clicking on the Color Red!')
+    # color_black
+    elif (cord == Cord.color_black):
+        print('## [DEBUG] - Clicking on the Color Black!')
+    # play
+    elif (cord == Cord.play):
+        print('## [DEBUG] - Clicking on the Play/Same Amount Button!')
+    # double
+    elif (cord == Cord.double):
+        print('## [DEBUG] - Clicking on the Double Button!')
+    # set location
     mousePos((cord))
     time.sleep(.3)
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,0,0)
     time.sleep(.3)
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,0,0)
     time.sleep(.3)
-    print("Click!")
 
 # start the Game
 def gameStart():
-    # check if all settings are set
-    if (Settings.money == True and Settings.chip_1 == True and Settings.double == True and Settings.loserSection == True and Settings.redOrBlack != 0 and Settings.start == True and Settings.color_black == True and Settings.color_red == True):
-        # start game
-        time.sleep(.3)
-        # click on location chip with number 1€
-        leftClick(Cord.chip_1)
-        time.sleep(.3)
-        if (Settings.redOrBlack == 1):
-            # begin with black
-            betBlack(False)
+    clear()
+    # check which casino is setup
+    if (Settings.casino == "Bet365"):
+        # Bet365
+        # check if all settings are set
+        if (Settings.money == True and Settings.chip_1 == True and Settings.double == True and Settings.loserSection == True and Settings.redOrBlack != 0 and Settings.start == True and Settings.black == True and Settings.red == True):
+            # start game
+            time.sleep(.3)
+            # click on location chip with number 1€
+            leftClick(Cord.chip_1)
+            time.sleep(.3)
+            if (Settings.redOrBlack == 1):
+                # begin with black
+                betBlack()
+            else:
+                # begin with red
+                betRed()
         else:
-            # begin with red
-            betRed(False)
-    else:
-        clear()
-        print("You have not configurated the Bot yet!")
-        time.sleep(2)
-        menu()
+            clear()
+            print(hashLine)
+            print("## [INFO] - You have not configurated the Bot yet!")
+            print(hashLine)
+            time.sleep(2)
+            menu()
+    elif (Settings.casino == "CasinoClub"):
+        # CasinoClub
+        print('## [INFO] - Money count will be wrong when you get a 0 Color Green, because the Bot can\'t see if you hit Green and receives 0.50 Euro!')
+        # check if all settings are set
+        if (Settings.money == True and Settings.chip_1 == True and Settings.loserSection == True and Settings.redOrBlack != 0 and Settings.start == True and Settings.black == True and Settings.red == True):
+            # start game
+            time.sleep(.3)
+            # click on location 'play' [Take a sit]
+            leftClick(Cord.play)
+            time.sleep(.3)
+            # click on location 'chip_1'
+            leftClick(Cord.chip_1)
+            time.sleep(.3)
+            if (Settings.redOrBlack == 1):
+                # begin with black
+                betBlack(False)
+            else:
+                # begin with red
+                betRed(False)
+        else:
+            clear()
+            print("## [INFO] - You have not configurated the Bot yet!")
+            time.sleep(2)
+            menu()
 
 ## KEYBOARD LISTENERS
 # on press
-def configMenu(key):
+def configMenu(key, casinoKey = 99):
     if key == 1:
         clear()
         # change money amount
-        print('Enter like:')
-        print('5€ = 5.0')
-        print('10€ = 10.0')
-        print('25,50€ = 25.5')
+        print(hashLine)
+        print('## Change Money')
+        print(hashLine)
+        print('## [INFO] - Enter like:')
+        print('## [INFO] - 5€ = 5.0')
+        print('## [INFO] - 10€ = 10.0')
+        print('## [INFO] - 25,50€ = 25.5')
         Settings.money = True
         time.sleep(.1)
-        Player.money = float(input('Money in your Hand? '))
+        Player.money = float(input('## - Money in your Hand? '))
         settingsInfo()
     elif key == 2:
         clear()
         # save position for roll/start
-        print('Wait for saving position for Play button ...')
+        print(hashLine)
+        print('## Change Start Button')
+        print(hashLine)
+        print('## [INFO] - Wait for saving position for Play button ...')
         Settings.start = True
         time.sleep(.1)
         saveCords('play')
@@ -272,7 +438,10 @@ def configMenu(key):
     elif key == 3:
         clear()
         # save position for double
-        print('Wait for saving position for Double button ...')
+        print(hashLine)
+        print('## Change Double Button')
+        print(hashLine)
+        print('## [INFO] - Wait for saving position for Double button ...')
         Settings.double = True
         time.sleep(.1)
         saveCords('double')
@@ -280,7 +449,10 @@ def configMenu(key):
     elif key == 4:
         clear()
         # save position for color red
-        print('Wait for saving position for Red color ...')
+        print(hashLine)
+        print('## Change Color Red')
+        print(hashLine)
+        print('## [INFO] - Wait for saving position for Red color ...')
         Settings.red = True
         time.sleep(.1)
         saveCords('color_red')
@@ -288,7 +460,10 @@ def configMenu(key):
     elif key == 5:
         clear()
         # save position for color black
-        print('Wait for saving position for Black color ...')
+        print(hashLine)
+        print('## Change Color Black')
+        print(hashLine)
+        print('## [INFO] - Wait for saving position for Black color ...')
         Settings.black = True
         time.sleep(.1)
         saveCords('color_black')
@@ -296,7 +471,10 @@ def configMenu(key):
     elif key == 6:
         clear()
         # save position for chip 1€
-        print('Wait for saving position for 1 Euro Chip ...')
+        print(hashLine)
+        print('## Change Chip 1 Euro')
+        print(hashLine)
+        print('## [INFO] - Wait for saving position for 1 Euro Chip ...')
         Settings.chip_1 = True
         time.sleep(.1)
         saveCords('chip_1')
@@ -304,7 +482,10 @@ def configMenu(key):
     elif key == 7:
         clear()
         # change loser section
-        print('Wait for saving position for Loser Section ...')
+        print(hashLine)
+        print('## Change Loser Section')
+        print(hashLine)
+        print('## [INFO] - Wait for saving position for Loser Section ...')
         Settings.loserSection = True
         time.sleep(.1)
         saveCords('loser')
@@ -314,34 +495,48 @@ def configMenu(key):
     elif key == 8:
         clear()
         # change start by black or red
-        print('Choose the starting Bet:')
-        print('Black = 1')
-        print('Red = 2')
+        print(hashLine)
+        print('## Change Black Or Red')
+        print(hashLine)
+        print('## [INFO] - Choose the starting Bet:')
+        print('## [INFO] - Black = 1')
+        print('## [INFO] - Red = 2')
         time.sleep(.1)
-        Settings.redOrBlack = int(input('Start with Black or Red? '))
+        Settings.redOrBlack = int(input('## - Start with Black or Red? '))
         settingsInfo()
     elif key == 0:
-        print('All Settings has been saved, back to main menu ...')
-        time.sleep(1)
-        menu()
+        # save config
+        time.sleep(.1)
+        writeConfig()
+    # Casino Key
+    if casinoKey == 1:
+        # Bet365
+        Settings.casino = "Bet365"
+        time.sleep(.1)
+        settingsInfo()
+    elif casinoKey == 2:
+        # CasinoClub
+        Settings.casino = "CasinoClub"
+        time.sleep(.1)
+        settingsInfo()
 
 ## MENUS
 # Menu
 def menu():
     clear()
-    print('######################')
+    print(hashLine)
     print('## ROULETTE BOT MENU')
-    print('######################')
+    print(hashLine)
     time.sleep(.1)
     print('## NAVIGATION OPTION')
-    print('######################')
+    print(hashLine)
     time.sleep(.1)
     print('## [1] - Start Bot')
     print('## [2] - Configurate Bot')
     print('##')
     print('## [9] - Open About')
     print('## [0] - Exit')
-    print('#######################')
+    print(hashLine)
     time.sleep(.3)
     # navigate to settings
     menu_nav = input('Select an option [1|2|9|0] and hit ENTER: ')
@@ -361,25 +556,25 @@ def menu():
 # Config
 def startConfig():
     clear()
-    settingsInfo()
+    casinoInfo()
 # About
 def startAbout():
     clear()
     # about me
-    print('######################')
+    print(hashLine)
     print('## ABOUT ROULETTEBOT')
-    print('######################')
+    print(hashLine)
     print('## Bot was created by SyfuxX!')
     print('## Thank you for using it.')
     time.sleep(.1)
-    print('######################')
+    print(hashLine)
     print('## NAVIGATION OPTION')
-    print('######################')
+    print(hashLine)
     time.sleep(.1)
     print('## [1] - Back to Main Menu')
     print('##')
     print('## [0] - Exit')
-    print('#######################')
+    print(hashLine)
     time.sleep(.3)
     # navigate to settings
     menu_nav = input('Select an option [1|0] and hit ENTER: ')
@@ -389,11 +584,27 @@ def startAbout():
     if menu_nav == '0':
         # exit
         exit()
+# Casino Info
+def casinoInfo():
+    time.sleep(1)
+    # asking for which casino he/she plays
+    clear()
+    print(hashLine)
+    print('## SELECT A CASINO')
+    print(hashLine)
+    print('## [1] - Bet365')
+    print('## [2] - CasinoClub')
+    print(hashLine)
+    time.sleep(.1)
+    casinoOption = int(input("Select an option [1|2] and hit ENTER: "))
+    configMenu(99, casinoOption)
 # Settings Info
 def settingsInfo():
-    time.sleep(1)
+    # asking for the configurations needs
     clear()
-    print('#######################')
+    print(hashLine)
+    print('## '+ str(Settings.casino))
+    print(hashLine)
     # check if 'money' is set
     if Settings.money == True:
         print('## [1] - Money Amount [X] - '+ str(Player.money) +'€')
@@ -404,11 +615,16 @@ def settingsInfo():
         print('## [2] - Start Button [X] - '+ str(Cord.play))
     else:
         print('## [2] - Start Button [ ]')
-    # check if 'double' is set
-    if Settings.double == True:
-        print('## [3] - Double Button [X] - '+ str(Cord.double))
+    # Button : Double
+    # check if casino is 'Bet365'
+    if Settings.casino == "Bet365":
+        # check if 'double' is set
+        if Settings.double == True:
+            print('## [3] - Double Button [X] - '+ str(Cord.double))
+        else:
+            print('## [3] - Double Button [ ]')
     else:
-        print('## [3] - Double Button [ ]')
+        print('## [3] - Double Button [AVAILABLE IN BET365 CASINO]')
     # check if 'red' is set
     if Settings.red == True:
         print('## [4] - Red Field [X] - '+ str(Cord.color_red))
@@ -438,11 +654,210 @@ def settingsInfo():
         print('## [8] - Start with Black/Red [ ]')
     print('##')
     print('## [0] - Save Config')
-    print('#######################')
+    print(hashLine)
     time.sleep(.1)
     option = int(input("Select an option [1|2|3|4|5|6|7|8|0] and hit ENTER: "))
     configMenu(option)
-    
-if __name__ == '__main__':
+
+## CONFIG FILE
+# Set File
+def setConfig():
+    # Check : If there is a config file
+    if os.path.isfile(configName):
+        Config.read(configName)
+        # Read File and Save to Bot
+        # SETTINGS
+        Settings.money = Config.getboolean('Settings', 'money')
+        Settings.chip_1 = Config.getboolean('Settings', 'chip_1')
+        Settings.start = Config.getboolean('Settings', 'start')
+        Settings.double = Config.getboolean('Settings', 'double')
+        Settings.red = Config.getboolean('Settings', 'red')
+        Settings.black = Config.getboolean('Settings', 'black')
+        Settings.loserSection = Config.getboolean('Settings', 'loserSection')
+        Settings.redOrBlack = Config.getint('Settings', 'redOrBlack')
+        Settings.casino = Config.get('Settings', 'casino')
+        # PLAYER
+        Player.money = Config.getfloat('Player', 'money')
+        # CORD
+        # chip 1
+        cordChip1F = Config.getint('Cord', 'chip_1_f')
+        cordChip1S = Config.getint('Cord', 'chip_1_s')
+        Cord.chip_1 = (cordChip1F, cordChip1S)
+        # color red
+        cordRedF = Config.getint('Cord', 'color_red_f')
+        cordRedS = Config.getint('Cord', 'color_red_s')
+        Cord.color_red = (cordRedF, cordRedS)
+        # color black
+        cordBlackF = Config.getint('Cord', 'color_black_f')
+        cordBlackS = Config.getint('Cord', 'color_black_s')
+        Cord.color_black = (cordBlackF, cordBlackS)
+        # play
+        cordPlayF = Config.getint('Cord', 'play_f')
+        cordPlayS = Config.getint('Cord', 'play_s')
+        Cord.play = (cordPlayF, cordPlayS)
+        # double
+        cordDoubleF = Config.getint('Cord', 'double_f')
+        cordDoubleS = Config.getint('Cord', 'double_s')
+        Cord.double = (cordDoubleF, cordDoubleS)
+        # loser
+        cordLoserF = Config.getint('Cord', 'loser_f')
+        cordLoserS = Config.getint('Cord', 'loser_s')
+        cordLoserT = Config.getint('Cord', 'loser_t')
+        cordLoserFo = Config.getint('Cord', 'loser_fo')
+        Cord.loser = (cordLoserF, cordLoserS, cordLoserT, cordLoserFo)
+        time.sleep(1)
+        clear()
+        print(hashLine)
+        print('## WELCOME')
+        print(hashLine)
+        print('## [INFO] - Loading Config ')
+        time.sleep(.5)
+        clear()
+        print(hashLine)
+        print('## WELCOME')
+        print(hashLine)
+        print('## [INFO] - Loading Config .')
+        time.sleep(.5)
+        clear()
+        print(hashLine)
+        print('## WELCOME')
+        print(hashLine)
+        print('## [INFO] - Loading Config ..')
+        time.sleep(.5)
+        clear()
+        print(hashLine)
+        print('## WELCOME')
+        print(hashLine)
+        print('## [INFO] - Loading Config ...')
+        time.sleep(.5)
+        clear()
+        print(hashLine)
+        print('## WELCOME')
+        print(hashLine)
+        print('## [INFO] - Config Loaded!')
+        time.sleep(.5)
+        print('## [INFO] - Starting Menu!')
+        time.sleep(1)
+        # Start Menu
+        menu()
+    else:
+        # No Config file found
+        time.sleep(1)
+        clear()
+        print(hashLine)
+        print('## WELCOME')
+        print(hashLine)
+        print('## [INFO] - Loading Config ')
+        time.sleep(.5)
+        clear()
+        print(hashLine)
+        print('## WELCOME')
+        print(hashLine)
+        print('## [INFO] - Loading Config .')
+        time.sleep(.5)
+        clear()
+        print(hashLine)
+        print('## WELCOME')
+        print(hashLine)
+        print('## [INFO] - Loading Config ..')
+        time.sleep(.5)
+        clear()
+        print(hashLine)
+        print('## WELCOME')
+        print(hashLine)
+        print('## [INFO] - Loading Config ...')
+        time.sleep(.5)
+        clear()
+        print(hashLine)
+        print('## WELCOME')
+        print(hashLine)
+        print('## [ERROR] - No Config File found!')
+        time.sleep(.5)
+        print('## [INFO] - Starting Menu!')
+        time.sleep(1)
+        # Start Menu
+        menu()
+
+# Write File
+def writeConfig():
+    if os.path.exists(configName):
+        # Delete Config file
+        os.remove(configName)
+        time.sleep(.5)
+    # Create the configuration file
+    cfg = open(configName, 'w')
+
+    # Add content to config
+    # SETTINGS
+    Config.add_section('Settings')
+    Config.set('Settings', 'money', Settings.money)
+    Config.set('Settings', 'chip_1', Settings.chip_1)
+    Config.set('Settings', 'start', Settings.start)
+    Config.set('Settings', 'double', Settings.double)
+    Config.set('Settings', 'red', Settings.red)
+    Config.set('Settings', 'black', Settings.black)
+    Config.set('Settings', 'loserSection', Settings.loserSection)
+    Config.set('Settings', 'redOrBlack', Settings.redOrBlack)
+    Config.set('Settings', 'casino', Settings.casino)
+    # PLAYER
+    Config.add_section('Player')
+    Config.set('Player', 'money', Player.money)
+    # CORD
+    Config.add_section('Cord')
+    Config.set('Cord', 'chip_1_f', Cord.chip_1_f)
+    Config.set('Cord', 'chip_1_s', Cord.chip_1_s)
+    Config.set('Cord', 'color_red_f', Cord.color_red_f)
+    Config.set('Cord', 'color_red_s', Cord.color_red_s)
+    Config.set('Cord', 'color_black_f', Cord.color_black_f)
+    Config.set('Cord', 'color_black_s', Cord.color_black_s)
+    Config.set('Cord', 'play_f', Cord.play_f)
+    Config.set('Cord', 'play_s', Cord.play_s)
+    Config.set('Cord', 'double_f', Cord.double_f)
+    Config.set('Cord', 'double_s', Cord.double_s)
+    Config.set('Cord', 'loser_f', Cord.loser_f)
+    Config.set('Cord', 'loser_s', Cord.loser_s)
+    Config.set('Cord', 'loser_t', Cord.loser_t)
+    Config.set('Cord', 'loser_fo', Cord.loser_fo)
+    Config.write(cfg)
+    cfg.close()
+
+    clear()
+    print(hashLine)
+    print('## CONFIG')
+    print(hashLine)
+    print('## [INFO] - Saving Config ')
+    time.sleep(.5)
+    clear()
+    print(hashLine)
+    print('## CONFIG')
+    print(hashLine)
+    print('## [INFO] - Saving Config .')
+    time.sleep(.5)
+    clear()
+    print(hashLine)
+    print('## CONFIG')
+    print(hashLine)
+    print('## [INFO] - Saving Config ..')
+    time.sleep(.5)
+    clear()
+    print(hashLine)
+    print('## CONFIG')
+    print(hashLine)
+    print('## [INFO] - Saving Config ...')
+    time.sleep(.5)
+    clear()
+    print(hashLine)
+    print('## CONFIG')
+    print(hashLine)
+    print('## [INFO] - Config Saved!')
+    time.sleep(.5)
+    print('## [INFO] - Going back to Menu!')
+    time.sleep(1)
+    # Start menu
     menu()
+
+if __name__ == '__main__':
+    #getCords()
+    #menu()
+    setConfig()
     #grab()
