@@ -43,7 +43,7 @@ from pynput import *
 # ----------------
 keyboard = keyboard
 mouse = mouse
-Config = configparser.ConfigParser()
+Config = configparser.ConfigParser(strict=False)
 x_pad = 455
 y_pad = 345
 isActive = False
@@ -129,36 +129,36 @@ def saveCords(value):
     # filter value
     if value == 'chip_1':
         # save cord for chip 1€
-        Cord.chip_1_f, Cord.chip_1_s = (x,y)
+        Cord.chip_1 = (x,y)
         time.sleep(.5)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'play':
         # save cord for play
-        Cord.play_f, Cord.play_s = (x,y)
+        Cord.play = (x,y)
         time.sleep(.5)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'double':
         # save cord for double
-        Cord.double_f, Cord.double_s = (x,y)
+        Cord.double = (x,y)
         time.sleep(.5)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'color_red':
         # save cord for color_red
-        Cord.color_red_f, Cord.color_red_s = (x,y)
+        Cord.color_red = (x,y)
         time.sleep(.5)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'color_black':
         # save cord for color_black
-        Cord.color_black_f, Cord.color_black_s = (x,y)
+        Cord.color_black = (x,y)
         time.sleep(.5)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'loser':
         # Bet365
         if (Settings.casino == "Bet365"):
-            Cord.loser_f, Cord.loser_s, Cord.loser_t, Cord.loser_fo = (x,y,x+50,y+50)
+            Cord.loser = (x,y,x+50,y+50)
         # CasinoClub
         elif (Settings.casino == "CasinoClub"):
-            Cord.loser_f, Cord.loser_s, Cord.loser_t, Cord.loser_fo = (x,y,x+50,y+12)
+            Cord.loser = (x,y,x+50,y+12)
         # save cord for loser section
         time.sleep(.1)
         print('Position saved! X: '+ str(x) +' Y: '+ str(y) +' Zone: +50')
@@ -504,6 +504,10 @@ def configMenu(key, casinoKey = 99):
         time.sleep(.1)
         Settings.redOrBlack = int(input('## - Start with Black or Red? '))
         settingsInfo()
+    elif key == 00:
+        # go back without saving
+        time.sleep(.1)
+        menu()
     elif key == 0:
         # save config
         time.sleep(.1)
@@ -653,10 +657,11 @@ def settingsInfo():
     else:
         print('## [8] - Start with Black/Red [ ]')
     print('##')
+    print('## [00] - Do not Save Config')
     print('## [0] - Save Config')
     print(hashLine)
     time.sleep(.1)
-    option = int(input("Select an option [1|2|3|4|5|6|7|8|0] and hit ENTER: "))
+    option = int(input("Select an option [1|2|3|4|5|6|7|8|00|0] and hit ENTER: "))
     configMenu(option)
 
 ## CONFIG FILE
@@ -780,44 +785,43 @@ def setConfig():
 
 # Write File
 def writeConfig():
-    if os.path.exists(configName):
-        # Delete Config file
-        os.remove(configName)
-        time.sleep(.5)
     # Create the configuration file
     cfg = open(configName, 'w')
 
     # Add content to config
     # SETTINGS
-    Config.add_section('Settings')
-    Config.set('Settings', 'money', Settings.money)
-    Config.set('Settings', 'chip_1', Settings.chip_1)
-    Config.set('Settings', 'start', Settings.start)
-    Config.set('Settings', 'double', Settings.double)
-    Config.set('Settings', 'red', Settings.red)
-    Config.set('Settings', 'black', Settings.black)
-    Config.set('Settings', 'loserSection', Settings.loserSection)
-    Config.set('Settings', 'redOrBlack', Settings.redOrBlack)
-    Config.set('Settings', 'casino', Settings.casino)
+    if not (Config.has_section('Settings')):
+        Config.add_section('Settings')
+    Config.set('Settings', 'money', str(Settings.money))
+    Config.set('Settings', 'chip_1', str(Settings.chip_1))
+    Config.set('Settings', 'start', str(Settings.start))
+    Config.set('Settings', 'double', str(Settings.double))
+    Config.set('Settings', 'red', str(Settings.red))
+    Config.set('Settings', 'black', str(Settings.black))
+    Config.set('Settings', 'loserSection', str(Settings.loserSection))
+    Config.set('Settings', 'redOrBlack',str( Settings.redOrBlack))
+    Config.set('Settings', 'casino', str(Settings.casino))
     # PLAYER
-    Config.add_section('Player')
-    Config.set('Player', 'money', Player.money)
+    if not (Config.has_section('Player')):
+        Config.add_section('Player')
+    Config.set('Player', 'money', str(Player.money))
     # CORD
-    Config.add_section('Cord')
-    Config.set('Cord', 'chip_1_f', Cord.chip_1_f)
-    Config.set('Cord', 'chip_1_s', Cord.chip_1_s)
-    Config.set('Cord', 'color_red_f', Cord.color_red_f)
-    Config.set('Cord', 'color_red_s', Cord.color_red_s)
-    Config.set('Cord', 'color_black_f', Cord.color_black_f)
-    Config.set('Cord', 'color_black_s', Cord.color_black_s)
-    Config.set('Cord', 'play_f', Cord.play_f)
-    Config.set('Cord', 'play_s', Cord.play_s)
-    Config.set('Cord', 'double_f', Cord.double_f)
-    Config.set('Cord', 'double_s', Cord.double_s)
-    Config.set('Cord', 'loser_f', Cord.loser_f)
-    Config.set('Cord', 'loser_s', Cord.loser_s)
-    Config.set('Cord', 'loser_t', Cord.loser_t)
-    Config.set('Cord', 'loser_fo', Cord.loser_fo)
+    if not (Config.has_section('Cord')):
+        Config.add_section('Cord')
+    Config.set('Cord', 'chip_1_f', str(Cord.chip_1_f))
+    Config.set('Cord', 'chip_1_s', str(Cord.chip_1_s))
+    Config.set('Cord', 'color_red_f', str(Cord.color_red_f))
+    Config.set('Cord', 'color_red_s', str(Cord.color_red_s))
+    Config.set('Cord', 'color_black_f', str(Cord.color_black_f))
+    Config.set('Cord', 'color_black_s', str(Cord.color_black_s))
+    Config.set('Cord', 'play_f', str(Cord.play_f))
+    Config.set('Cord', 'play_s', str(Cord.play_s))
+    Config.set('Cord', 'double_f', str(Cord.double_f))
+    Config.set('Cord', 'double_s', str(Cord.double_s))
+    Config.set('Cord', 'loser_f', str(Cord.loser_f))
+    Config.set('Cord', 'loser_s', str(Cord.loser_s))
+    Config.set('Cord', 'loser_t', str(Cord.loser_t))
+    Config.set('Cord', 'loser_fo', str(Cord.loser_fo))
     Config.write(cfg)
     cfg.close()
 
