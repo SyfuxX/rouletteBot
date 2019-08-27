@@ -504,7 +504,7 @@ def configMenu(key, casinoKey = 99):
         time.sleep(.1)
         Settings.redOrBlack = int(input('## - Start with Black or Red? '))
         settingsInfo()
-    elif key == 00:
+    elif key == 9:
         # go back without saving
         time.sleep(.1)
         menu()
@@ -657,11 +657,11 @@ def settingsInfo():
     else:
         print('## [8] - Start with Black/Red [ ]')
     print('##')
-    print('## [00] - Do not Save Config')
+    print('## [9] - Do not Save Config')
     print('## [0] - Save Config')
     print(hashLine)
     time.sleep(.1)
-    option = int(input("Select an option [1|2|3|4|5|6|7|8|00|0] and hit ENTER: "))
+    option = int(input("Select an option [1|2|3|4|5|6|7|8][9|0] and hit ENTER: "))
     configMenu(option)
 
 ## CONFIG FILE
