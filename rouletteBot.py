@@ -84,15 +84,29 @@ class Player:
 # Cord class with cordinations in
 class Cord:
     # chip section
-    chip_1_f, chip_1_s = (96,283)
+    chip_1_f = 0
+    chip_1_s = 0
+    chip_1 = (0,0)
     # bet section
-    color_red_f, color_red_s = (445,483)
-    color_black_f, color_black_s = (546,484)
+    color_red_f = 0
+    color_red_s = 0
+    color_red = (0,0)
+    color_black_f = 0
+    color_black_s = 0
+    color_black = (0,0)
     # play menu section
-    play_f, play_s = (893,462)
-    double_f, double_s = (893,373)
+    play_f = 0
+    play_s = 0
+    play = (0,0)
+    double_f = 0
+    double_s = 0
+    double = (0,0)
     # loser secton
-    loser_f, loser_s, loser_t, loser_fo = (1460,842,1460+50,842+10)
+    loser_f = 0
+    loser_s = 0
+    loser_t = 0
+    loser_fo = 0
+    loser = (0,0,0,0)
 
 # Color Codes 
 class ColorCodes:
@@ -101,14 +115,14 @@ class ColorCodes:
 ## CLEAR CONSOLE
 clear = lambda: os.system('cls')
 
-# take a screenshot of position 'x_pad' and 'y_pad'
+# Take a screenshot of position 'x_pad' and 'y_pad'
 def screenGrab():
     box = (x_pad, y_pad, x_pad+990, y_pad+580)
     im = ImageGrab.grab(box)
     
     #im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
     return im
-# take a screenshot and turn it in grayscale and calculate a color code
+# Take a screenshot and turn it in grayscale and calculate a color code
 def grab():
     box = (Cord.loser)
     im = ImageOps.grayscale(ImageGrab.grab(box))
@@ -119,52 +133,70 @@ def grab():
     return colorCode
 
 ## CORDINATIONS
-# get current mouse position x and y
+# Get current mouse position x and y
 def getCords():
     x,y = win32api.GetCursorPos()
     print(x,y)
-# set cordinations
+# Set cordinations
 def saveCords(value):
     x,y = win32api.GetCursorPos()
     # filter value
     if value == 'chip_1':
         # save cord for chip 1€
-        Cord.chip_1 = (x,y)
+        Cord.chip_1_f = x
+        Cord.chip_1_s = y
+        Cord.chip_1 = (Cord.chip_1_f,Cord.chip_1_s)
         time.sleep(.5)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'play':
         # save cord for play
-        Cord.play = (x,y)
+        Cord.play_f = x
+        Cord.play_s = y
+        Cord.play = (Cord.play_f,Cord.play_s)
         time.sleep(.5)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'double':
         # save cord for double
-        Cord.double = (x,y)
+        Cord.double_f = x
+        Cord.double_s = y
+        Cord.double = (Cord.double_f,Cord.double_s)
         time.sleep(.5)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'color_red':
         # save cord for color_red
-        Cord.color_red = (x,y)
+        Cord.color_red_f = x
+        Cord.color_red_s = y
+        Cord.color_red = (Cord.color_red_f,Cord.color_red_s)
         time.sleep(.5)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'color_black':
         # save cord for color_black
-        Cord.color_black = (x,y)
+        Cord.color_black_f = x
+        Cord.color_black_s = y
+        Cord.color_black = (Cord.color_black_f,Cord.color_black_s)
         time.sleep(.5)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'loser':
         # Bet365
         if (Settings.casino == "Bet365"):
-            Cord.loser = (x,y,x+50,y+50)
+            Cord.loser_f = x
+            Cord.loser_s = y
+            Cord.loser_t = x+50
+            Cord.loser_fo = y+50
+            Cord.loser = (Cord.loser_f,Cord.loser_s,Cord.loser_t,Cord.loser_fo)
         # CasinoClub
         elif (Settings.casino == "CasinoClub"):
-            Cord.loser = (x,y,x+50,y+12)
+            Cord.loser_f = x
+            Cord.loser_s = y
+            Cord.loser_t = x+50
+            Cord.loser_fo = y+12
+            Cord.loser = (Cord.loser_f,Cord.loser_s,Cord.loser_t,Cord.loser_fo)
         # save cord for loser section
         time.sleep(.1)
         print('Position saved! X: '+ str(x) +' Y: '+ str(y) +' Zone: +50')
 
 ## Money
-# decrease money
+# Decrease money
 def decreaseMoney():
     print(hashLine)
     # decrease money
@@ -173,7 +205,7 @@ def decreaseMoney():
     print('## [INFO] - LOSE! Money: '+ str(Player.money) +'€')
     # increase loseCounter
     Player.loseCounter += 1
-# increase money
+# Increase money
 def increaseMoney():
     print(hashLine)
     # increase money by winMultiplicator
@@ -184,7 +216,7 @@ def increaseMoney():
     Player.loseCounter = 0
 
 ## BETTING
-# bet on red
+# Bet on red
 def betRed(isLose=False):
     # check if 'Player.loseCounter' is bigger than 0
     if (Player.loseCounter > 0):
@@ -233,7 +265,7 @@ def betRed(isLose=False):
         time.sleep(.3)
         checkRound("red")
 
-# bet on black
+# Bet on black
 def betBlack(isLose=False):
     # check if 'Player.loseCounter' is bigger than 0
     if (Player.loseCounter > 0):
@@ -281,7 +313,7 @@ def betBlack(isLose=False):
         time.sleep(.3)
         checkRound("black")
 
-# check round if you lost it or won it
+# Check round if you lost it or won it
 def checkRound(color):
     i = 0
     # Bet365
@@ -326,11 +358,11 @@ def checkRound(color):
             print("## [INFO] - Playing now on red ...")
             betRed(False)
 
-# set mouse to 'cord' position
+# Set mouse to 'cord' position
 def mousePos(cord):
     win32api.SetCursorPos((cord[0], cord[1]))
 
-# do a left mouse click
+# Do a left mouse click
 def leftClick(cord):
     # debug
     # chip_1
@@ -356,7 +388,7 @@ def leftClick(cord):
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,0,0)
     time.sleep(.3)
 
-# start the Game
+# Start the Game
 def gameStart():
     clear()
     # check which casino is setup
@@ -407,10 +439,10 @@ def gameStart():
             time.sleep(2)
             menu()
 
-## KEYBOARD LISTENERS
-# on press
-def configMenu(key, casinoKey = 99):
-    if key == 1:
+## MENU MANAGEMENT
+# Settings
+def menuSettings(key):
+    if key == "1":
         clear()
         # change money amount
         print(hashLine)
@@ -422,9 +454,10 @@ def configMenu(key, casinoKey = 99):
         print('## [INFO] - 25,50€ = 25.5')
         Settings.money = True
         time.sleep(.1)
+        print('##')
         Player.money = float(input('## - Money in your Hand? '))
         settingsInfo()
-    elif key == 2:
+    elif key == "2":
         clear()
         # save position for roll/start
         print(hashLine)
@@ -435,7 +468,7 @@ def configMenu(key, casinoKey = 99):
         time.sleep(.1)
         saveCords('play')
         settingsInfo()
-    elif key == 3:
+    elif key == "3":
         clear()
         # save position for double
         print(hashLine)
@@ -446,7 +479,7 @@ def configMenu(key, casinoKey = 99):
         time.sleep(.1)
         saveCords('double')
         settingsInfo()
-    elif key == 4:
+    elif key == "4":
         clear()
         # save position for color red
         print(hashLine)
@@ -457,7 +490,7 @@ def configMenu(key, casinoKey = 99):
         time.sleep(.1)
         saveCords('color_red')
         settingsInfo()
-    elif key == 5:
+    elif key == "5":
         clear()
         # save position for color black
         print(hashLine)
@@ -468,7 +501,7 @@ def configMenu(key, casinoKey = 99):
         time.sleep(.1)
         saveCords('color_black')
         settingsInfo()
-    elif key == 6:
+    elif key == "6":
         clear()
         # save position for chip 1€
         print(hashLine)
@@ -479,7 +512,7 @@ def configMenu(key, casinoKey = 99):
         time.sleep(.1)
         saveCords('chip_1')
         settingsInfo()
-    elif key == 7:
+    elif key == "7":
         clear()
         # change loser section
         print(hashLine)
@@ -492,7 +525,7 @@ def configMenu(key, casinoKey = 99):
         saveColor = grab()
         ColorCodes.lose = saveColor
         settingsInfo()
-    elif key == 8:
+    elif key == "8":
         clear()
         # change start by black or red
         print(hashLine)
@@ -502,27 +535,45 @@ def configMenu(key, casinoKey = 99):
         print('## [INFO] - Black = 1')
         print('## [INFO] - Red = 2')
         time.sleep(.1)
+        print('##')
         Settings.redOrBlack = int(input('## - Start with Black or Red? '))
         settingsInfo()
-    elif key == 9:
+    elif key == "-1":
         # go back without saving
         time.sleep(.1)
         menu()
-    elif key == 0:
+    elif key == "0":
         # save config
         time.sleep(.1)
         writeConfig()
+    # Error : Try again
+    else:
+        # wrong key
+        time.sleep(.1)
+        settingsInfo()
+
+# Casino Selection
+def menuCasino(key):
     # Casino Key
-    if casinoKey == 1:
+    if key == "1":
         # Bet365
         Settings.casino = "Bet365"
         time.sleep(.1)
         settingsInfo()
-    elif casinoKey == 2:
+    elif key == "2":
         # CasinoClub
         Settings.casino = "CasinoClub"
         time.sleep(.1)
         settingsInfo()
+    elif key == "0":
+        # Select nothing
+        time.sleep(.1)
+        settingsInfo()
+    # Error : Try again
+    else:
+        # wrong key
+        time.sleep(.1)
+        casinoInfo()
 
 ## MENUS
 # Menu
@@ -548,15 +599,18 @@ def menu():
     if menu_nav == '1':
         # start bot
         gameStart()
-    if menu_nav == '2':
+    elif menu_nav == '2':
         # start config
         startConfig()
-    if menu_nav == '9':
+    elif menu_nav == '9':
         # start about
         startAbout()
-    if menu_nav == '0':
+    elif menu_nav == '0':
         # exit
         exit()
+    else:
+        # try again
+        menu()
 # Config
 def startConfig():
     clear()
@@ -598,10 +652,12 @@ def casinoInfo():
     print(hashLine)
     print('## [1] - Bet365')
     print('## [2] - CasinoClub')
+    print('##')
+    print('## [0] - Skip')
     print(hashLine)
     time.sleep(.1)
-    casinoOption = int(input("Select an option [1|2] and hit ENTER: "))
-    configMenu(99, casinoOption)
+    casinoOption = input("Select an option [1|2|0] and hit ENTER: ")
+    menuCasino(casinoOption)
 # Settings Info
 def settingsInfo():
     # asking for the configurations needs
@@ -657,12 +713,12 @@ def settingsInfo():
     else:
         print('## [8] - Start with Black/Red [ ]')
     print('##')
-    print('## [9] - Do not Save Config')
+    print('## [-1] - Do not Save Config')
     print('## [0] - Save Config')
     print(hashLine)
     time.sleep(.1)
-    option = int(input("Select an option [1|2|3|4|5|6|7|8][9|0] and hit ENTER: "))
-    configMenu(option)
+    option = input("Select an option [1|2|3|4|5|6|7|8|-1|0] and hit ENTER: ")
+    menuSettings(option)
 
 ## CONFIG FILE
 # Set File
