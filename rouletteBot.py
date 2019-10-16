@@ -62,12 +62,18 @@ class Settings:
     start = False
     # double button [Bet365]
     double = False
+    # divide button [Gamdom]
+    divide = False
     # red field [All]
     red = False
     # black field [All]
     black = False
     # loser section [All]
     loserSection = False
+    # win red [Gamdom]
+    winRed = False
+    # win black [Gamdom]
+    winBlack = False
     # start by black/red [All]
     redOrBlack = 0
     # webpage / software
@@ -101,16 +107,33 @@ class Cord:
     double_f = 0
     double_s = 0
     double = (0,0)
+    divide_f = 0
+    divide_s = 0
+    divide = (0,0)
     # loser secton
     loser_f = 0
     loser_s = 0
     loser_t = 0
     loser_fo = 0
     loser = (0,0,0,0)
+    # win red section
+    win_red_f = 0
+    win_red_s = 0
+    win_red_t = 0
+    win_red_fo = 0
+    win_red = (0,0,0,0)
+    # win black section
+    win_black_f = 0
+    win_black_s = 0
+    win_black_t = 0
+    win_black_fo = 0
+    win_black = (0,0,0,0)
 
 # Color Codes 
 class ColorCodes:
     lose = 10246
+    winRed = 0
+    winBlack = 0
 
 ## CLEAR CONSOLE
 clear = lambda: os.system('cls')
@@ -123,8 +146,13 @@ def screenGrab():
     #im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
     return im
 # Take a screenshot and turn it in grayscale and calculate a color code
-def grab():
-    box = (Cord.loser)
+def grab(color="false"):
+    if (color == "false"):
+        box = (Cord.loser)
+    elif (color == "red"):
+        box = (Cord.win_red)
+    elif (color == "black"):
+        box = (Cord.win_black)
     im = ImageOps.grayscale(ImageGrab.grab(box))
     #im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
     colorCode = array(im.getcolors())
@@ -146,35 +174,42 @@ def saveCords(value):
         Cord.chip_1_f = x
         Cord.chip_1_s = y
         Cord.chip_1 = (Cord.chip_1_f,Cord.chip_1_s)
-        time.sleep(.5)
+        time.sleep(.3)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'play':
         # save cord for play
         Cord.play_f = x
         Cord.play_s = y
         Cord.play = (Cord.play_f,Cord.play_s)
-        time.sleep(.5)
+        time.sleep(.3)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'double':
         # save cord for double
         Cord.double_f = x
         Cord.double_s = y
         Cord.double = (Cord.double_f,Cord.double_s)
-        time.sleep(.5)
+        time.sleep(.3)
+        print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
+    elif value == 'divide':
+        # save cord for divide
+        Cord.divide_f = x
+        Cord.divide_s = y
+        Cord.divide = (Cord.divide_f,Cord.divide_s)
+        time.sleep(.3)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'color_red':
         # save cord for color_red
         Cord.color_red_f = x
         Cord.color_red_s = y
         Cord.color_red = (Cord.color_red_f,Cord.color_red_s)
-        time.sleep(.5)
+        time.sleep(.3)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'color_black':
         # save cord for color_black
         Cord.color_black_f = x
         Cord.color_black_s = y
         Cord.color_black = (Cord.color_black_f,Cord.color_black_s)
-        time.sleep(.5)
+        time.sleep(.3)
         print('## [INFO] - Position saved! X: '+ str(x) +' Y: '+ str(y))
     elif value == 'loser':
         # Bet365
@@ -193,7 +228,28 @@ def saveCords(value):
             Cord.loser = (Cord.loser_f,Cord.loser_s,Cord.loser_t,Cord.loser_fo)
         # save cord for loser section
         time.sleep(.1)
-        print('Position saved! X: '+ str(x) +' Y: '+ str(y) +' Zone: +50')
+        print('Position saved! X: '+ str(x) +' Y: '+ str(y) +' Zone: 50x50 or 50x12')
+    # only for Gamdom
+    elif value == 'win_red':
+        # save cord for win red
+        Cord.win_red_f = x
+        Cord.win_red_s = y
+        Cord.win_red_t = x+50
+        Cord.win_red_fo = y+15
+        Cord.win_red = (Cord.win_red_f,Cord.win_red_s,Cord.win_red_t,Cord.win_red_fo)
+        # save cord for loser section
+        time.sleep(.1)
+        print('Position saved! X: '+ str(x) +' Y: '+ str(y) +' Zone: 50x15')
+    elif value == 'win_black':
+        # save cord for win black
+        Cord.win_black_f = x
+        Cord.win_black_s = y
+        Cord.win_black_t = x+50
+        Cord.win_black_fo = y+15
+        Cord.win_black = (Cord.win_black_f,Cord.win_black_s,Cord.win_black_t,Cord.win_black_fo)
+        # save cord for loser section
+        time.sleep(.1)
+        print('Position saved! X: '+ str(x) +' Y: '+ str(y) +' Zone: 50x15')
 
 ## Money
 # Decrease money
@@ -264,6 +320,26 @@ def betRed(isLose=False):
             leftClick(Cord.play)
         time.sleep(.3)
         checkRound("red")
+    # Gamdom
+    elif (Settings.casino == "Gamdom"):
+        # You Lost - double it
+        if isLose == True:
+            # click on 'x2' [Select amount]
+            leftClick(Cord.double)
+            time.sleep(.3)
+            # click on 'Red' [Play]
+            leftClick(Cord.color_red)
+            time.sleep(.3)
+        # You Won
+        else:
+            # click on '1/2' x times [x = loseCounter]
+            for i in range(clickCounter):
+                time.sleep(.3)
+                leftClick(Cord.divide)
+            leftClick(Cord.color_red)
+            time.sleep(.3)
+        time.sleep(.1)
+        checkRound("red")
 
 # Bet on black
 def betBlack(isLose=False):
@@ -312,6 +388,26 @@ def betBlack(isLose=False):
             leftClick(Cord.play)
         time.sleep(.3)
         checkRound("black")
+    # Gamdom
+    elif (Settings.casino == "Gamdom"):
+        # You Lost - double it
+        if isLose == True:
+            # click on 'x2' [Select amount]
+            leftClick(Cord.double)
+            time.sleep(.3)
+            # click on 'Black' [Play]
+            leftClick(Cord.color_black)
+            time.sleep(.3)
+        # You Won
+        else:
+            # click on '1/2' x times [x = loseCounter]
+            for i in range(clickCounter):
+                time.sleep(.3)
+                leftClick(Cord.divide)
+            leftClick(Cord.color_black)
+            time.sleep(.3)
+        time.sleep(.1)
+        checkRound("black")
 
 # Check round if you lost it or won it
 def checkRound(color):
@@ -322,41 +418,80 @@ def checkRound(color):
     # CasinoClub
     elif (Settings.casino == "CasinoClub"):
         i = 30
+    # Gamdom
+    elif (Settings.casino == "Gamdom"):
+        i = 25
+    print('## [INFO] - Checking Win/Lose after '+ str(i) +' seconds ...')
     time.sleep(i)
+    print('## [INFO] - Checking Win/Lose ...')
     # red
     if color == "red":
         # check for color codes
-        # if you lost
-        if grab() == ColorCodes.lose:
-            # decrease money
-            decreaseMoney()
-            # play double
-            print("## [INFO] - Playing again with double ...")
-            betRed(True)
-        # if you won
-        elif grab() != ColorCodes.lose:
-            # increase money
-            increaseMoney()
-            # play black
-            print("## [INFO] - Playing now on black ...")
-            betBlack(False)
+        # if is Gamdom
+        if (Settings.casino == "Gamdom"):
+            # if you lost
+            if grab() != ColorCodes.winRed:
+                # decrease money
+                decreaseMoney()
+                # play double
+                print("## [INFO] - Playing again with double ...")
+                betRed(True)
+            # if you won
+            elif grab() == ColorCodes.winRed:
+                # increase money
+                increaseMoney()
+                # play black
+                print("## [INFO] - Playing now on black ...")
+                betBlack(False)
+        else:
+            # if you lost
+            if grab() == ColorCodes.lose:
+                # decrease money
+                decreaseMoney()
+                # play double
+                print("## [INFO] - Playing again with double ...")
+                betRed(True)
+            # if you won
+            elif grab() != ColorCodes.lose:
+                # increase money
+                increaseMoney()
+                # play black
+                print("## [INFO] - Playing now on black ...")
+                betBlack(False)
     # black
     elif color == "black":
         # check for color codes
-        # if you lost
-        if grab() == ColorCodes.lose:
-            # decrease money
-            decreaseMoney()
-            # play double
-            print("## [INFO] - Playing again with double ...")
-            betBlack(True)
-        # if you won
-        elif grab() != ColorCodes.lose:
-            # increase money
-            increaseMoney()
-            # play red
-            print("## [INFO] - Playing now on red ...")
-            betRed(False)
+        # if is Gamdom
+        if (Settings.casino == "Gamdom"):
+            # if you lost
+            if grab() != ColorCodes.winBlack:
+                # decrease money
+                decreaseMoney()
+                # play double
+                print("## [INFO] - Playing again with double ...")
+                betBlack(True)
+            # if you won
+            elif grab() == ColorCodes.winBlack:
+                # increase money
+                increaseMoney()
+                # play red
+                print("## [INFO] - Playing now on red ...")
+                betRed(False)
+        else:
+            # if you lost
+            if grab() == ColorCodes.lose:
+                # decrease money
+                decreaseMoney()
+                # play double
+                print("## [INFO] - Playing again with double ...")
+                betBlack(True)
+            # if you won
+            elif grab() != ColorCodes.lose:
+                # increase money
+                increaseMoney()
+                # play red
+                print("## [INFO] - Playing now on red ...")
+                betRed(False)
 
 # Set mouse to 'cord' position
 def mousePos(cord):
@@ -427,6 +562,22 @@ def gameStart():
             # click on location 'chip_1'
             leftClick(Cord.chip_1)
             time.sleep(.3)
+            if (Settings.redOrBlack == 1):
+                # begin with black
+                betBlack(False)
+            else:
+                # begin with red
+                betRed(False)
+        else:
+            clear()
+            print("## [INFO] - You have not configurated the Bot yet!")
+            time.sleep(2)
+            menu()
+    elif (Settings.casino == "Gamdom"):
+        # Gamdom
+        # check if all settings are set
+        if (Settings.money == True and Settings.winBlack == True and Settings.winRed == True and Settings.redOrBlack != 0 and Settings.black == True and Settings.red == True):
+            # start game
             if (Settings.redOrBlack == 1):
                 # begin with black
                 betBlack(False)
@@ -538,6 +689,43 @@ def menuSettings(key):
         print('##')
         Settings.redOrBlack = int(input('## - Start with Black or Red? '))
         settingsInfo()
+    elif key == "9":
+        clear()
+        # save position for divide
+        print(hashLine)
+        print('## Change Divide Button')
+        print(hashLine)
+        print('## [INFO] - Wait for saving position for Divide Button ...')
+        Settings.divide = True
+        time.sleep(.1)
+        saveCords('divide')
+        settingsInfo()
+    elif key == "10":
+        clear()
+        # change win red section
+        print(hashLine)
+        print('## Change Win Red Section')
+        print(hashLine)
+        print('## [INFO] - Wait for saving position for Win Red Section ...')
+        Settings.winRed = True
+        time.sleep(.1)
+        saveCords('win_red')
+        saveColor = grab("red")
+        ColorCodes.winRed = saveColor
+        settingsInfo()
+    elif key == "11":
+        clear()
+        # change win black section
+        print(hashLine)
+        print('## Change Win Black Section')
+        print(hashLine)
+        print('## [INFO] - Wait for saving position for Win Black Section ...')
+        Settings.winBlack = True
+        time.sleep(.1)
+        saveCords('win_black')
+        saveColor = grab("black")
+        ColorCodes.winBlack = saveColor
+        settingsInfo()
     elif key == "-1":
         # go back without saving
         time.sleep(.1)
@@ -563,6 +751,11 @@ def menuCasino(key):
     elif key == "2":
         # CasinoClub
         Settings.casino = "CasinoClub"
+        time.sleep(.1)
+        settingsInfo()
+    elif key == "3":
+        # Gamdom
+        Settings.casino = "Gamdom"
         time.sleep(.1)
         settingsInfo()
     elif key == "0":
@@ -652,11 +845,12 @@ def casinoInfo():
     print(hashLine)
     print('## [1] - Bet365')
     print('## [2] - CasinoClub')
+    print('## [3] - Gamdom')
     print('##')
     print('## [0] - Skip')
     print(hashLine)
     time.sleep(.1)
-    casinoOption = input("Select an option [1|2|0] and hit ENTER: ")
+    casinoOption = input("Select an option [1|2|3|0] and hit ENTER: ")
     menuCasino(casinoOption)
 # Settings Info
 def settingsInfo():
@@ -671,20 +865,23 @@ def settingsInfo():
     else:
         print('## [1] - Money Amount [ ]')
     # check if 'play' is set
-    if Settings.start == True:
-        print('## [2] - Start Button [X] - '+ str(Cord.play))
+    if Settings.casino != "Gamdom":
+        if Settings.start == True:
+            print('## [2] - Start Button [X] - '+ str(Cord.play))
+        else:
+            print('## [2] - Start Button [ ]')
     else:
-        print('## [2] - Start Button [ ]')
+        print('## [2] - Start Button [NOT AVAILABLE IN THIS CASINO]')
     # Button : Double
     # check if casino is 'Bet365'
-    if Settings.casino == "Bet365":
+    if Settings.casino == "Bet365" or Settings.casino == "Gamdom":
         # check if 'double' is set
         if Settings.double == True:
             print('## [3] - Double Button [X] - '+ str(Cord.double))
         else:
             print('## [3] - Double Button [ ]')
     else:
-        print('## [3] - Double Button [AVAILABLE IN BET365 CASINO]')
+        print('## [3] - Double Button [NOT AVAILABLE IN THIS CASINO]')
     # check if 'red' is set
     if Settings.red == True:
         print('## [4] - Red Field [X] - '+ str(Cord.color_red))
@@ -696,15 +893,21 @@ def settingsInfo():
     else:
         print('## [5] - Black Field [ ]')
     # check if 'chip 1' is set
-    if Settings.chip_1 == True:
-        print('## [6] - Chip 1 Euro [X] - '+ str(Cord.chip_1))
+    if Settings.casino != 'Gamdom':
+        if Settings.chip_1 == True:
+            print('## [6] - Chip 1 Euro [X] - '+ str(Cord.chip_1))
+        else:
+            print('## [6] - Chip 1 Euro [ ]')
     else:
-        print('## [6] - Chip 1 Euro [ ]')
+        print('## [6] - Chip 1 Euro [NOT AVAILABLE IN THIS CASINO]')
     # check if 'loser section' is set
-    if Settings.loserSection == True:
-        print('## [7] - Loser Section [X] - '+ str(Cord.loser))
+    if Settings.casino != 'Gamdom':
+        if Settings.loserSection == True:
+            print('## [7] - Loser Section [X] - '+ str(Cord.loser))
+        else:
+            print('## [7] - Loser Section [ ]')
     else:
-        print('## [7] - Loser Section [ ]')
+        print('## [7] - Loser Section [NOT AVAILABLE IN THIS CASINO]')
     # change start by black or red
     if Settings.redOrBlack == 2:
         print('## [8] - Start with Black/Red [X] - Red')
@@ -712,12 +915,36 @@ def settingsInfo():
         print('## [8] - Start with Black/Red [X] - Black')
     else:
         print('## [8] - Start with Black/Red [ ]')
+    # change 'divide' button
+    if Settings.casino == 'Gamdom':
+        if Settings.divide == True:
+            print('## [9] - Divide Button [X] - '+ str(Cord.divide))
+        else:
+            print('## [9] - Divide Button [ ]')
+    else:
+        print('## [9] - Divide Button [NOT AVAILABLE IN THIS CASINO]')
+    # change 'win_red' button
+    if Settings.casino == 'Gamdom':
+        if Settings.winRed == True:
+            print('## [10] - Win Red Section [X] - '+ str(Cord.win_red))
+        else:
+            print('## [10] - Win Red Section [ ]')
+    else:
+        print('## [10] - Win Red Section [NOT AVAILABLE IN THIS CASINO]')
+    # change 'win_black' button
+    if Settings.casino == 'Gamdom':
+        if Settings.winBlack == True:
+            print('## [11] - Win Black Section [X] - '+ str(Cord.win_black))
+        else:
+            print('## [11] - Win Black Section [ ]')
+    else:
+        print('## [11] - Win Black Section [NOT AVAILABLE IN THIS CASINO]')
     print('##')
     print('## [-1] - Do not Save Config')
     print('## [0] - Save Config')
     print(hashLine)
     time.sleep(.1)
-    option = input("Select an option [1|2|3|4|5|6|7|8|-1|0] and hit ENTER: ")
+    option = input("Select an option [1|2|3|4|5|6|7|8|9|10|11|-1|0] and hit ENTER: ")
     menuSettings(option)
 
 ## CONFIG FILE
@@ -732,9 +959,12 @@ def setConfig():
         Settings.chip_1 = Config.getboolean('Settings', 'chip_1')
         Settings.start = Config.getboolean('Settings', 'start')
         Settings.double = Config.getboolean('Settings', 'double')
+        Settings.divide = Config.getboolean('Settings', 'divide')
         Settings.red = Config.getboolean('Settings', 'red')
         Settings.black = Config.getboolean('Settings', 'black')
         Settings.loserSection = Config.getboolean('Settings', 'loserSection')
+        Settings.winRed = Config.getboolean('Settings', 'winRed')
+        Settings.winBlack = Config.getboolean('Settings', 'winBlack')
         Settings.redOrBlack = Config.getint('Settings', 'redOrBlack')
         Settings.casino = Config.get('Settings', 'casino')
         # PLAYER
@@ -760,12 +990,33 @@ def setConfig():
         cordDoubleF = Config.getint('Cord', 'double_f')
         cordDoubleS = Config.getint('Cord', 'double_s')
         Cord.double = (cordDoubleF, cordDoubleS)
+        # divide
+        cordDivideF = Config.getint('Cord', 'divide_f')
+        cordDivideS = Config.getint('Cord', 'divide_s')
+        Cord.divide = (cordDivideF, cordDivideS)
         # loser
         cordLoserF = Config.getint('Cord', 'loser_f')
         cordLoserS = Config.getint('Cord', 'loser_s')
         cordLoserT = Config.getint('Cord', 'loser_t')
         cordLoserFo = Config.getint('Cord', 'loser_fo')
         Cord.loser = (cordLoserF, cordLoserS, cordLoserT, cordLoserFo)
+        # win red
+        cordWinRedF = Config.getint('Cord', 'win_red_f')
+        cordWinRedS = Config.getint('Cord', 'win_red_s')
+        cordWinRedT = Config.getint('Cord', 'win_red_t')
+        cordWinRedFo = Config.getint('Cord', 'win_red_fo')
+        Cord.win_red = (cordWinRedF, cordWinRedS, cordWinRedT, cordWinRedFo)
+        # win black
+        cordWinBlackF = Config.getint('Cord', 'win_black_f')
+        cordWinBlackS = Config.getint('Cord', 'win_black_s')
+        cordWinBlackT = Config.getint('Cord', 'win_black_t')
+        cordWinBlackFo = Config.getint('Cord', 'win_black_fo')
+        Cord.win_black = (cordWinBlackF, cordWinBlackS, cordWinBlackT, cordWinBlackFo)
+        # COLORCODES
+        # lose
+        colorCodesLose = Config.getint('ColorCodes', 'lose')
+        colorCodesWinRed = Config.getint('ColorCodes', 'winRed')
+        colorCodesWinBlack = Config.getint('ColorCodes', 'winBlack')
         time.sleep(1)
         clear()
         print(hashLine)
@@ -852,9 +1103,12 @@ def writeConfig():
     Config.set('Settings', 'chip_1', str(Settings.chip_1))
     Config.set('Settings', 'start', str(Settings.start))
     Config.set('Settings', 'double', str(Settings.double))
+    Config.set('Settings', 'divide', str(Settings.divide))
     Config.set('Settings', 'red', str(Settings.red))
     Config.set('Settings', 'black', str(Settings.black))
     Config.set('Settings', 'loserSection', str(Settings.loserSection))
+    Config.set('Settings', 'winRed', str(Settings.winRed))
+    Config.set('Settings', 'winBlack', str(Settings.winBlack))
     Config.set('Settings', 'redOrBlack',str( Settings.redOrBlack))
     Config.set('Settings', 'casino', str(Settings.casino))
     # PLAYER
@@ -874,10 +1128,27 @@ def writeConfig():
     Config.set('Cord', 'play_s', str(Cord.play_s))
     Config.set('Cord', 'double_f', str(Cord.double_f))
     Config.set('Cord', 'double_s', str(Cord.double_s))
+    Config.set('Cord', 'divide_f', str(Cord.divide_f))
+    Config.set('Cord', 'divide_s', str(Cord.divide_s))
     Config.set('Cord', 'loser_f', str(Cord.loser_f))
     Config.set('Cord', 'loser_s', str(Cord.loser_s))
     Config.set('Cord', 'loser_t', str(Cord.loser_t))
     Config.set('Cord', 'loser_fo', str(Cord.loser_fo))
+    Config.set('Cord', 'win_red_f', str(Cord.win_red_f))
+    Config.set('Cord', 'win_red_s', str(Cord.win_red_s))
+    Config.set('Cord', 'win_red_t', str(Cord.win_red_t))
+    Config.set('Cord', 'win_red_fo', str(Cord.win_red_fo))
+    Config.set('Cord', 'win_black_f', str(Cord.win_black_f))
+    Config.set('Cord', 'win_black_s', str(Cord.win_black_s))
+    Config.set('Cord', 'win_black_t', str(Cord.win_black_t))
+    Config.set('Cord', 'win_black_fo', str(Cord.win_black_fo))
+    # COLORCODES
+    if not (Config.has_section('ColorCodes')):
+        Config.add_section('ColorCodes')
+    Config.set('ColorCodes', 'lose', str(ColorCodes.lose))
+    Config.set('ColorCodes', 'winRed', str(ColorCodes.winRed))
+    Config.set('ColorCodes', 'winBlack', str(ColorCodes.winBlack))
+    # Write it
     Config.write(cfg)
     cfg.close()
 
@@ -920,4 +1191,4 @@ if __name__ == '__main__':
     #getCords()
     #menu()
     setConfig()
-    #grab()
+    #grab("red")
